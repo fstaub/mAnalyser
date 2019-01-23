@@ -19,9 +19,11 @@ class Balance():
         self.incoming_raw = []
         self.outgoing_raw = []   
         self.inout_account = defaultdict(lambda: 0)
+        self.start = defaultdict(lambda: 0)
 
         for a,n in zip(accounts,names):
             self.inout_account[n] = []
+            self.start[n] = a.start
             for e in a.all_information:
                 self.inout_account[n].append(e)                
                 if e[2]>0:
@@ -30,9 +32,11 @@ class Balance():
                     self.outgoing_raw.append(e)
 
     def get_changes_accounts(self,accounts):
-        self.changes= defaultdict(lambda: 0) #{}
+        self.changes= defaultdict(lambda: 0) 
+        self.transfers= defaultdict(lambda: 0) 
         for x,y in zip(self.names, accounts):
             # self.changes[x] = self.account_evolution_month(y.internal_transfers[x]+self.inout_account[x])
+            self.transfers[x] = self.inout_account[x]+y.internal_transfers
             self.changes[x] = self.account_evolution_month(self.inout_account[x]+y.internal_transfers)
 
     def account_evolution_month(self,account):
@@ -60,23 +64,6 @@ class Balance():
             for d in dates:
                 entry_sum[e] += abs(sum_all[e][d])/len(dates)
         return entry_sum
-
-
-
-        #for e in list(keywords.keys()):
-        #         if d in sum_all[e]:
-        #             table.setItem(count,0,QTableWidgetItem(e))
-        #             table.setItem(count,1,QTableWidgetItem("{:10.2f} Eur".format(abs(sum_all[e][d]))))
-        #             detail_button = QPushButton("Details")
-        #             detail_button.clicked.connect(self.make_show_details(in_data[e],d,str(e)+" in "+str(d)))
-        #             table.setCellWidget(count,2,detail_button)
-        #             count += 1
-        #             table.setRowCount(count+1)
-        #             if e in entry_sum:
-        #                 entry_sum[e] += abs(sum_all[e][d])
-        #             else: 
-        #                 entry_sum[e] = abs(sum_all[e][d])
-
 
     def categorise_money_transfers(self,data,keywords):
         category = {}
@@ -209,29 +196,57 @@ def arrange_sum_by_data2(data,dates):
         entries.append(sub_list)
     return entries                    
 
-def find_csv_filenames(path_to_dir, suffix=".csv" ):
-            filenames = os.listdir(path_to_dir)
-            return [ filename for filename in filenames if filename.endswith( suffix ) ]
-
 
 class Depot():
-    def __init__(self,directory):
-        self.dates=[]
-        self.values=[]
-        filenames =  find_csv_filenames(directory)
-        for cfile in filenames:
-                start_writing=False
-                with open(os.path.join(directory,cfile),encoding = "ISO-8859-1") as csvfile:
-                    day = csv.reader(csvfile, delimiter=';')
-                    for row in day:
-                        if (start_writing):
-                            print(row) 
-                            print("m6",row[-6])
-                            self.dates.append(datetime.datetime.strptime(cfile[6:16], '%d.%m.%Y'))
-                            self.values.append(float(row[-6].replace('.','').replace(',','.')))
-                        elif len(row) > 0:
-                            if (row[0]=="WP-Art"):
-                                start_writing=True
+    def __init__(self, stocks):
+        self.changes_depot(stocks)
+        
+    def changes_depot(self, stocks):    
+        dates = sorted(list(stocks.all_information.keys()), key=lambda x: datetime.datetime.strptime(x, "%d.%m.%Y").date())
+        last_win_stocks = 0
+        last_win_fonds = 0
+        self.all_information = []
+        for d in dates:
+            win_stocks = 0
+            win_fonds = 0
+            if len(stocks.all_information[d]) > 0:
+                for x in stocks.all_information[d]:
+                    if x[0] in stocks.stocks:
+                        win_stocks  += x[1]*(x[3]-x[2])
+                    else:
+                        win_fonds += x[1]*(x[3]-x[2])
+                self.all_information.append([d,'Fonds',win_fonds-last_win_fonds])
+                self.all_information.append([d,'Aktien',win_stocks-last_win_stocks])
+                last_win_fonds = win_fonds
+                last_win_stocks = win_stocks 
+
+def generate_daily_changes(info, fonds=True, stocks=True ):
+        dates = []
+        values = []
+        for d in info:
+            if (d[1]=='Aktien' and stocks==True) or (d[1] == 'Fonds' and fonds==True):
+                if d[0] in dates:
+                    values[-1] += d[2]
+                else:
+                    values += [d[2]]
+                    dates += [d[0]]
+        return dates, values
+
+def generate_total_changes(info, fonds=True, stocks=True):
+        dates = []
+        values = []
+        for d in info:
+            if (d[1]=='Aktien' and stocks==True) or (d[1] == 'Fonds' and fonds==True):
+                if d[0] in dates:
+                    values[-1] += d[2]
+                else:
+                    if values == []:
+                        values += [d[2]]
+                    else:
+                        values += [values[-1] + d[2]]
+                    dates += [d[0]]
+        return dates, values                
+        
                             
 
         

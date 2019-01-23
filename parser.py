@@ -1,17 +1,21 @@
 import os 
 import json 
 import csv
+import datetime
 
 class Parser():
     def filter_redundant(self,data):
         out = []
         internal = []
+        start = 0
         for entry in data:
-            if  max([entry[1].find(x) for x in self.keywords.INTERNAL])<0:
+            if entry[1].find("STARTGUTHABEN") >= 0:
+                start = entry[-1]
+            elif  max([entry[1].find(x) for x in self.keywords.INTERNAL])<0:
                 out.append(entry)
             else:
                 internal.append(entry)
-        return out, internal
+        return out, internal, start
 
     def format_number(self,in_string):
         return float(in_string.replace(".","").replace(",","."))
@@ -22,7 +26,7 @@ class Parser():
         listOfFile = os.listdir(dirName)
         for file in listOfFile:
             out = out + (self.parse(dirName+file))
-        self.all_information, self.internal_transfers = self.filter_redundant(out)
+        self.all_information, self.internal_transfers, self.start = self.filter_redundant(out)
 
 
 class DiBa_Parser(Parser):
@@ -97,6 +101,40 @@ class PayPal_Parser(Parser):
     def format_entry(self,text):
         out=[text[0],text[3]+" "+text[4],self.format_number(text[7])]
         return out  
+
+class DepotParser(Parser):
+    def __init__(self, dirName):
+        out = []
+        listOfFile = os.listdir(dirName)
+        self.all_information = {}
+        self.stocks = []
+        self.fonds = []
+        for file in listOfFile:
+            date = datetime.datetime.strptime(file[6:16], '%d.%m.%Y')            
+            try:
+                self.all_information[date.strftime("%d.%m.%Y")], new_stocks, new_fonds = self.parse(dirName,file)
+                self.stocks += (new_stocks)
+                self.fonds += (new_fonds)
+            except:
+                pass
+        self.fonds = list(set(self.fonds))
+        self.stocks = list(set(self.stocks))
+
+    def parse(self,directory,file):
+        stocks = []
+        fonds = []
+        with open(os.path.join(directory,file), encoding = "ISO-8859-1") as csvfile:
+            spamreader = csv.reader(csvfile, delimiter=';', quotechar='"')
+            out = []
+            for row in spamreader:
+                if len(row)>0:
+                    if row[0] == "Aktien" or row[0] == "Fonds":
+                        out.append([row[2], int(row[3]), self.format_number(row[5]), self.format_number(row[10])])
+                        if row[0] == "Aktien":
+                            stocks.append(row[2])
+                        else:
+                            fonds.append(row[2])
+        return out, stocks, fonds
 
 class Keywords():
     def __init__(self,file):

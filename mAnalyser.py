@@ -9,27 +9,33 @@ import analyse
 main_path = os.getcwd()
 
 KEYS = parser.Keywords(os.path.join(main_path,"Data","config.json"))
+print("keys",KEYS.IN)   
 
 all_accounts = []
-for d in os.listdir(os.path.join(main_path,"Data")):
-    print(d)
+all_account_names = []
+for d in os.listdir(os.path.join(main_path,"Data","Accounts")):
     if (d == "PayPal"):
-        PayPal = parser.PayPal_Parser(os.path.join(main_path,"Data",d,""),KEYS)
-        all_accounts.append(PayPal)
+        for x in os.listdir(os.path.join(main_path,"Data","Accounts",d)):
+            PayPal = parser.PayPal_Parser(os.path.join(main_path,"Data","Accounts",d,x,""),KEYS)
+            all_accounts.append(PayPal)
+            all_account_names.append(x)
     if (d == "DiBa"):
-        DiBa = parser.DiBa_Parser(os.path.join(main_path,"Data",d,""),KEYS)        
-        all_accounts.append(DiBa)
+        for x in os.listdir(os.path.join(main_path,"Data","Accounts",d)):
+            DiBa = parser.DiBa_Parser(os.path.join(main_path,"Data","Accounts",d,x,""),KEYS)        
+            all_accounts.append(DiBa)
+            all_account_names.append(x)
     if (d == "CA"):
-        CA = parser.CA_Parser(os.path.join(main_path,"Data",d,""),KEYS)  
-        all_accounts.append(CA)
+        for x in os.listdir(os.path.join(main_path,"Data","Accounts",d)):
+            CA = parser.CA_Parser(os.path.join(main_path,"Data","Accounts",d,x,""),KEYS)  
+            all_accounts.append(CA)
+            all_account_names.append(x)
     if (d == "LBB"):
-        LBB = parser.LBB_Parser(os.path.join(main_path,"Data",d,""),KEYS)  
-        all_accounts.append(LBB)
-
-money = analyse.Balance(all_accounts,KEYS)        
-
-# print(money.incoming)   
-# 
+        for x in os.listdir(os.path.join(main_path,"Data","Accounts",d)):
+            LBB = parser.LBB_Parser(os.path.join(main_path,"Data","Accounts",d,x,""),KEYS)  
+            all_accounts.append(LBB)
+            all_account_names.append(x)
+accounts = analyse.Balance(all_accounts, all_account_names, KEYS)   
+print(accounts.changes)
 app = gui.QApplication(sys.argv)
-ex = gui.App(money,KEYS)
+ex = gui.App(accounts,KEYS)
 sys.exit(app.exec_())                                

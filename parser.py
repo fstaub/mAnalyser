@@ -5,10 +5,13 @@ import csv
 class Parser():
     def filter_redundant(self,data):
         out = []
+        internal = []
         for entry in data:
-            if  max([entry[1].find(x) for x in self.keywords.IGNORE])<0:
+            if  max([entry[1].find(x) for x in self.keywords.INTERNAL])<0:
                 out.append(entry)
-        return out
+            else:
+                internal.append(entry)
+        return out, internal
 
     def format_number(self,in_string):
         return float(in_string.replace(".","").replace(",","."))
@@ -19,7 +22,7 @@ class Parser():
         listOfFile = os.listdir(dirName)
         for file in listOfFile:
             out = out + (self.parse(dirName+file))
-        self.all_information =  self.filter_redundant(out)
+        self.all_information, self.internal_transfers = self.filter_redundant(out)
 
 
 class DiBa_Parser(Parser):
@@ -85,14 +88,14 @@ class PayPal_Parser(Parser):
             for row in spamreader:
                 if (start_writing):
                     line = self.format_entry(row)
-                    if line[-1]<0: 
-                            data.append(line)
+#                    if line[-1]<0: 
+                    data.append(line)
                 elif len(row)>0:
                     start_writing=True
         return data
 
     def format_entry(self,text):
-        out=[text[0],text[3],self.format_number(text[7])]
+        out=[text[0],text[3]+" "+text[4],self.format_number(text[7])]
         return out  
 
 class Keywords():
@@ -101,4 +104,4 @@ class Keywords():
             d = json.load(json_data)
         self.IN = d['Einkommen']
         self.OUT = d['Ausgaben']
-        self.IGNORE = d['Ignore']
+        self.INTERNAL = d['Internal']

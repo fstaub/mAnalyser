@@ -47,7 +47,8 @@ class Balance():
         for d in dates:
             summed = 0
             for k in remaining:
-                if (datetime.datetime.strptime(k[0][3:], "%m.%Y").date() <= datetime.datetime.strptime(d, "%m.%Y").date()):
+                # if (datetime.datetime.strptime(k[0][3:], "%m.%Y").date() <= datetime.datetime.strptime(d, "%m.%Y").date()):
+                if (k[0] <= d):
                     summed += k[-1]
                 else:
                     todo.append(k)
@@ -85,7 +86,8 @@ class Balance():
 def sum_up_month(data):
     out = {}
     for d in data:
-        month = d[0][3:]
+        # month = d[0][3:]
+        month = get_month(d[0])
         if month in out:
             out[month] = d[2]+out[month]
         else:
@@ -96,15 +98,19 @@ flatten = lambda l: [item for sublist in l for item in sublist]
 
 def find_dates(data):
     out = list(set(flatten([list(x.keys()) for x in data.values()])))
-    return sorted(out,key=lambda x: datetime.datetime.strptime(x, "%m.%Y").date())
+#    return sorted(out,key=lambda x: datetime.datetime.strptime(x, "%m.%Y").date())
+    return sorted(out)
 
 def find_dates_list(data):
-    out = [y[0][3:] for y in data]
-    return sorted(list(set(out)),key=lambda x: datetime.datetime.strptime(x, "%m.%Y").date())
+    #out = [y[0][3:] for y in data]
+    #return sorted(list(set(out)),key=lambda x: datetime.datetime.strptime(x, "%m.%Y").date())
+    out = [y[0] for y in data]
+    return sorted(list(set(out)))    
 
 def find_dates2(all_accounts):
     out = list(set(flatten(list([list(x.keys()) for x in list((all_accounts.values()))]))))
-    return  sorted(out,key=lambda x: datetime.datetime.strptime(x, "%m.%Y").date()) 
+    # return  sorted(out,key=lambda x: datetime.datetime.strptime(x, "%m.%Y").date()) 
+    return  sorted(out) 
 
 # MAIN FUNCTIONS
 def summary_months(data,keywords):
@@ -124,7 +130,8 @@ def group_data_by_month(in_data, dates):
             new_list = []
             sum_up = 0
             for e in in_data[k]:
-                if e[0][3:] == d:
+                # if e[0][3:] == d:
+                if get_month(e[0]) == d:                
                     new_list.append(e)
                     sum_up +=e[2]
             new_main[k] = {}
@@ -159,12 +166,12 @@ def add_months(sourcedate,months):
 
 def generate_dates(first,last):
     out = [first]
-    start = datetime.datetime.strptime(first, "%m.%Y").date()
-    end = datetime.datetime.strptime(last, "%m.%Y").date()
-    next_month =  add_months(start,1)
-    print(next_month,end)
-    while (next_month <= end):
+    # start = datetime.datetime.strptime(first, "%m.%Y").date()
+    # end = datetime.datetime.strptime(last, "%m.%Y").date()
+    next_month =  add_months(first,1)
+    while (next_month <= last):
         out.append(next_month.strftime("%m.%Y"))
+        out.append(next_month.strftime("%m.%Y"))        
         next_month = add_months(next_month,1)
     return out    
 
@@ -202,7 +209,8 @@ class Depot():
         self.changes_depot(stocks)
         
     def changes_depot(self, stocks):    
-        dates = sorted(list(stocks.all_information.keys()), key=lambda x: datetime.datetime.strptime(x, "%d.%m.%Y").date())
+#        dates = sorted(list(stocks.all_information.keys()), key=lambda x: datetime.datetime.strptime(x, "%d.%m.%Y").date())
+        dates = sorted(list(stocks.all_information.keys()))
         last_win_stocks = 0
         last_win_fonds = 0
         self.all_information = []
@@ -245,7 +253,11 @@ def generate_total_changes(info, fonds=True, stocks=True):
                     else:
                         values += [values[-1] + d[2]]
                     dates += [d[0]]
-        return dates, values                
+        return dates, values    
+
+def get_month(in_date):
+    print(in_date)
+    return  in_date.strftime("%m/%Y")
         
                             
 

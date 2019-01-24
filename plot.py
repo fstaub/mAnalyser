@@ -34,7 +34,7 @@ def formatter(**kwargs):
 
 def HistPlot_Account(in_data, start, end, bar, w, h):
     dates = analyse.find_dates2(in_data)
-    dates = [d for d in dates if ( datetime.datetime.strptime(end, "%m.%Y").date() >=  datetime.datetime.strptime(d, "%m.%Y").date()>=  datetime.datetime.strptime(start, "%m.%Y").date())]
+    dates = [d for d in dates if ( datetime.datetime.strptime(end, "%m/%Y").date() >=  datetime.datetime.strptime(d, "%m/%Y").date()>=  datetime.datetime.strptime(start, "%m/%Y").date())]
 
     data = []
     for x in list(in_data.values()):
@@ -53,7 +53,7 @@ def HistPlot_Changes(in_data, start, end, w, h):
         out += [sum(x['sum'] for x in list(data[x].values()))]
 
 
-    # dates = [d for d in dates if ( datetime.datetime.strptime(end, "%m.%Y").date() >=  datetime.datetime.strptime(d, "%m.%Y").date()>=  datetime.datetime.strptime(start, "%m.%Y").date())]
+    # dates = [d for d in dates if ( datetime.datetime.strptime(end, "%m/%Y").date() >=  datetime.datetime.strptime(d, "%m/%Y").date()>=  datetime.datetime.strptime(start, "%m/%Y").date())]
 
     # data = []
     # for x in list(in_data.values()):
@@ -66,7 +66,7 @@ def HistPlot_Changes(in_data, start, end, w, h):
 def HistPlot_InOut(in_data, keywords, start, end, bar, w, h):
     sum_all = analyse.summary_months(in_data, list(keywords.keys()))
     dates = analyse.find_dates(sum_all)
-    dates = [d for d in dates if ( datetime.datetime.strptime(end, "%m.%Y").date() >=  datetime.datetime.strptime(d, "%m.%Y").date()>=  datetime.datetime.strptime(start, "%m.%Y").date())]
+    dates = [d for d in dates if ( datetime.datetime.strptime(end, "%m/%Y").date() >=  datetime.datetime.strptime(d, "%m/%Y").date()>=  datetime.datetime.strptime(start, "%m/%Y").date())]
 
     arranged = analyse.arrange_sum_by_data2(sum_all,dates)
     data = [[abs(x) for x in y] for y in arranged]
@@ -119,7 +119,7 @@ def PieChart(in_data,keywords,start,end,w,h):
     # data to plot
     sum_all = analyse.summary_months(in_data,list(keywords.keys()))
     dates = analyse.find_dates(sum_all)
-    dates = [d for d in dates if ( datetime.datetime.strptime(end, "%m.%Y").date() >=  datetime.datetime.strptime(d, "%m.%Y").date()>=  datetime.datetime.strptime(start, "%m.%Y").date())]
+    dates = [d for d in dates if ( datetime.datetime.strptime(end, "%m/%Y").date() >=  datetime.datetime.strptime(d, "%m/%Y").date()>=  datetime.datetime.strptime(start, "%m/%Y").date())]
 
     sizes = [abs(sum([x for x in s.values()])) for s in sum_all.values()]
     sizes = [s/len(dates) for s in sizes]
@@ -165,9 +165,9 @@ def BarAverage_InOut(in_data,keywords,start,end,w,h):
     sum_all = analyse.summary_months(in_data,list(keywords.keys()))
     dates = analyse.find_dates(sum_all)
     dates = [d for d in dates if (
-         datetime.datetime.strptime(end, "%m.%Y").date() >=
-          datetime.datetime.strptime(d, "%m.%Y").date() >=
-            datetime.datetime.strptime(start, "%m.%Y").date()
+         datetime.datetime.strptime(end, "%m/%Y").date() >=
+          datetime.datetime.strptime(d, "%m/%Y").date() >=
+            datetime.datetime.strptime(start, "%m/%Y").date()
             )]
 
     arranged = analyse.arrange_sum_by_data2(sum_all,dates)

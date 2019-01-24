@@ -20,6 +20,9 @@ class Parser():
     def format_number(self,in_string):
         return float(in_string.replace(".","").replace(",","."))
 
+    def format_date(self, in_string):
+        return  datetime.datetime.strptime(in_string, "%d.%m.%Y").date()        
+
     def __init__(self,dirName,keywords):
         self.keywords=keywords
         out = []
@@ -44,7 +47,7 @@ class DiBa_Parser(Parser):
         return data
 
     def format_entry(self,text):
-        out=[text[0],self.purpose(text[2],text[3],text[4]),self.format_number(text[-2])]
+        out=[self.format_date(text[0]),self.purpose(text[2],text[3],text[4]),self.format_number(text[-2])]
         return out
 
     def purpose(self,in1,in2,in3):
@@ -66,7 +69,7 @@ class LBB_Parser(Parser):
         return data
 
     def format_entry(self,text):
-        out=[text[1],text[3],self.format_number(text[-1])]
+        out=[self.format_date(text[1]),text[3],self.format_number(text[-1])]
         return out
 
 
@@ -80,7 +83,7 @@ class CA_Parser(Parser):
         return data
 
     def format_entry(self,text):
-        out=[text[0],text[1],self.format_number(text[-1])]
+        out=[self.format_date(text[0]),text[1],self.format_number(text[-1])]
         return out
 
 class PayPal_Parser(Parser):     
@@ -99,7 +102,7 @@ class PayPal_Parser(Parser):
         return data
 
     def format_entry(self,text):
-        out=[text[0],text[3]+" "+text[4],self.format_number(text[7])]
+        out=[self.format_date(text[0]),text[3]+" "+text[4],self.format_number(text[7])]
         return out  
 
 class DepotParser(Parser):
@@ -112,7 +115,7 @@ class DepotParser(Parser):
         for file in listOfFile:
             date = datetime.datetime.strptime(file[6:16], '%d.%m.%Y')            
             try:
-                self.all_information[date.strftime("%d.%m.%Y")], new_stocks, new_fonds = self.parse(dirName,file)
+                self.all_information[date], new_stocks, new_fonds = self.parse(dirName,file)
                 self.stocks += (new_stocks)
                 self.fonds += (new_fonds)
             except:

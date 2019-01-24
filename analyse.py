@@ -261,4 +261,63 @@ def get_month(in_date):
         
                             
 
+# DARA FOR PLOTS
+
+def prepare_stacked_bar(in_data, keywords, start, end):
+        sum_all = summary_months(in_data, list(keywords.keys()))
+        dates = find_dates(sum_all)
+        dates = [d for d in dates if ( datetime.datetime.strptime(end, "%m/%Y").date() >=  datetime.datetime.strptime(d, "%m/%Y").date()>=  datetime.datetime.strptime(start, "%m/%Y").date())]
+
+        arranged = arrange_sum_by_data2(sum_all,dates)
+        data = [[abs(x) for x in y] for y in arranged]
+
+        return data, list(in_data.keys())
+
+def prepare_stacked_bar2(in_data, keywords, start, end):
+        # val = []
+        # for x in in_data.keys():
+        #     val.append(sum(in_data[x].values()))
+
+        # return val, list(in_data.keys())
+        dates = generate_dates(start, end)
+        data = group_data_by_month(in_data, dates)
+        out = []
+        for x in data.keys():
+            out += [sum(x['sum'] for x in list(data[x].values()))]
+        dates = [d for d in dates if ( datetime.datetime.strptime(end, "%m/%Y").date() >=  datetime.datetime.strptime(d, "%m/%Y").date()>=  datetime.datetime.strptime(start, "%m/%Y").date())]
+
+        data = []
+        for x in list(in_data.values()):
+            data.append([abs(sum(x[d] for d in dates[:i])) for i in range(1,len(dates)+1)])
+    
+        data = [sum(d) for d in data]
+
+        return out, list(in_data.keys())   
+
+
+def prepare_pie_chart(in_data, keywords, start, end):
+        sum_all = summary_months(in_data,list(keywords.keys()))
+        dates = find_dates(sum_all)
+        dates = [d for d in dates if ( datetime.datetime.strptime(end, "%m/%Y").date() >=  datetime.datetime.strptime(d, "%m/%Y").date()>=  datetime.datetime.strptime(start, "%m/%Y").date())]
+
+        sizes = [abs(sum([x for x in s.values()])) for s in sum_all.values()]
+        sizes = [s/len(dates) for s in sizes]
+        return sizes, list(in_data.keys())
+
+def prepare_horizontal_bar(in_data, keywords, start, end):
+#     # data to plot
+    sum_all = summary_months(in_data,list(keywords.keys()))
+    dates = find_dates(sum_all)
+    dates = [d for d in dates if (
+         datetime.datetime.strptime(end, "%m/%Y").date() >=
+          datetime.datetime.strptime(d, "%m/%Y").date() >=
+            datetime.datetime.strptime(start, "%m/%Y").date()
+            )]
+
+    arranged = arrange_sum_by_data2(sum_all,dates)
+    labels = list(sum_all.keys())
+    val = [abs(sum([x for x in y.values()]))/(1*len(dates)) for y in sum_all.values()]
+    return val, labels
+#     return BarAverage(sum_all.values(), dates, labels, w, h)         
+
         

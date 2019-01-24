@@ -15,10 +15,10 @@ Embedding In Tk
 # from matplotlib.figure import Figure
 
 
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+# import matplotlib.pyplot as plt
+# from matplotlib.figure import Figure
+# from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+# from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 import mplcursors
 from mpldatacursor import datacursor
@@ -78,13 +78,93 @@ class Detail_Window(QDialog):
         layout.addWidget(self.table)
         self.setLayout(layout)
 
-class PlotWindow(QDialog):
-    def __init__(self, used_layout, title):
+# class PlotWindow(QDialog):
+#     def __init__(self, used_layout, title):
+#         super().__init__()
+#         # self.frame = QGroupBox("Details")
+#         layout = QVBoxLayout()
+#         self.title = title
+#         self.left = 2
+#         self.top = 2        
+#         self.width = 900
+#         self.height = 800
+
+#         self.setWindowTitle(self.title)
+#         self.setGeometry(self.left, self.top, self.width, self.height)
+
+#         if (used_layout == 3):
+#             self.add_plot_canvas_new3()
+#         else:
+#             self.add_plot_canvas_new4()                                    
+
+#         layout.addWidget(self.canvas_frame)
+
+#         self.setLayout(layout)      
+
+#     def add_plot_canvas_new3(self):
+#         # # Main
+#         self.canvas_frame = QGroupBox("")
+#         layout = QVBoxLayout() 
+
+#         # # TOP
+#         self.PLOT_UP = PlotCanvas(self.canvas_frame, width=7, height=4)
+#         layout.addWidget(self.PLOT_UP)
+
+#         # # # Bottom
+#         self.canvas_down_frame = QGroupBox("")        
+#         layout_down = QHBoxLayout()
+#         self.canvas_DL_frame = QGroupBox("")        
+#         self.canvas_DR_frame = QGroupBox("")        
+#         self.PLOT_DOWN_LEFT = PlotCanvas(self.canvas_DL_frame, width=3, height=4)
+#         self.PLOT_DOWN_RIGHT = PlotCanvas(self.canvas_DR_frame, width=4, height=4)
+#         layout_down.addWidget(self.PLOT_DOWN_LEFT)
+#         layout_down.addWidget(self.PLOT_DOWN_RIGHT)
+#         self.canvas_down_frame.setLayout(layout_down)
+
+#         # # Main again
+#         # layout.addWidget(self.canvas_frame)
+#         layout.addWidget(self.canvas_down_frame)
+#         self.canvas_frame.setLayout(layout) 
+
+#     def add_plot_canvas_new4(self):
+#         # # Main
+#         self.canvas_frame = QGroupBox("")
+#         layout = QVBoxLayout() 
+
+#         # # TOP
+#         self.canvas_top_frame = QGroupBox("")        
+#         layout_top = QHBoxLayout()
+#         self.canvas_TL_frame = QGroupBox("")        
+#         self.canvas_TR_frame = QGroupBox("")        
+#         self.PLOT_TOP_LEFT = PlotCanvas(self.canvas_TL_frame, width=3, height=4)
+#         self.PLOT_TOP_RIGHT = PlotCanvas(self.canvas_TR_frame, width=4, height=4)
+#         layout_top.addWidget(self.PLOT_TOP_LEFT)
+#         layout_top.addWidget(self.PLOT_TOP_RIGHT)
+#         self.canvas_top_frame.setLayout(layout_top)
+
+#         # # # Bottom
+#         self.canvas_down_frame = QGroupBox("")        
+#         layout_down = QHBoxLayout()
+#         self.canvas_DL_frame = QGroupBox("")        
+#         self.canvas_DR_frame = QGroupBox("")        
+#         self.PLOT_DOWN_LEFT = PlotCanvas(self.canvas_DL_frame, width=3, height=4)
+#         self.PLOT_DOWN_RIGHT = PlotCanvas(self.canvas_DR_frame, width=4, height=4)
+#         layout_down.addWidget(self.PLOT_DOWN_LEFT)
+#         layout_down.addWidget(self.PLOT_DOWN_RIGHT)
+#         self.canvas_down_frame.setLayout(layout_down)
+
+#         # # Main again
+#         layout.addWidget(self.canvas_top_frame)
+#         layout.addWidget(self.canvas_down_frame)
+#         self.canvas_frame.setLayout(layout)  
+
+class NewPlotWindow(QDialog):
+    def __init__(self, used_layout, arg1=[], arg2=[], arg3=[], arg4=[], title=""):
         super().__init__()
         # self.frame = QGroupBox("Details")
         layout = QVBoxLayout()
         self.title = title
-        self.left = 2
+        self.left = 300
         self.top = 2        
         self.width = 900
         self.height = 800
@@ -93,21 +173,21 @@ class PlotWindow(QDialog):
         self.setGeometry(self.left, self.top, self.width, self.height)
 
         if (used_layout == 3):
-            self.add_plot_canvas_new3()
+            self.add_plot_canvas_new3(arg1, arg2, arg3)
         else:
-            self.add_plot_canvas_new4()                                    
+            self.add_plot_canvas_new4(arg1, arg2, arg3, arg4)                                    
 
         layout.addWidget(self.canvas_frame)
 
         self.setLayout(layout)      
 
-    def add_plot_canvas_new3(self):
+    def add_plot_canvas_new3(self, arg1, arg2, arg3):
         # # Main
         self.canvas_frame = QGroupBox("")
         layout = QVBoxLayout() 
 
         # # TOP
-        self.PLOT_UP = PlotCanvas(self.canvas_frame, width=7, height=4)
+        self.PLOT_UP = plot.NewPlotCanvas("StackedBar", in_arg=arg1, width=7, height=4)
         layout.addWidget(self.PLOT_UP)
 
         # # # Bottom
@@ -115,8 +195,8 @@ class PlotWindow(QDialog):
         layout_down = QHBoxLayout()
         self.canvas_DL_frame = QGroupBox("")        
         self.canvas_DR_frame = QGroupBox("")        
-        self.PLOT_DOWN_LEFT = PlotCanvas(self.canvas_DL_frame, width=3, height=4)
-        self.PLOT_DOWN_RIGHT = PlotCanvas(self.canvas_DR_frame, width=4, height=4)
+        self.PLOT_DOWN_LEFT = plot.NewPlotCanvas("PieChart", in_arg=arg2, width=3, height=4) #PlotCanvas(self.canvas_DL_frame, width=3, height=4)
+        self.PLOT_DOWN_RIGHT = plot.NewPlotCanvas("HorizontalBar", in_arg=arg3, width=4, height=4)  # PlotCanvas(self.canvas_DR_frame, width=4, height=4)
         layout_down.addWidget(self.PLOT_DOWN_LEFT)
         layout_down.addWidget(self.PLOT_DOWN_RIGHT)
         self.canvas_down_frame.setLayout(layout_down)
@@ -124,9 +204,9 @@ class PlotWindow(QDialog):
         # # Main again
         # layout.addWidget(self.canvas_frame)
         layout.addWidget(self.canvas_down_frame)
-        self.canvas_frame.setLayout(layout) 
+        self.canvas_frame.setLayout(layout)
 
-    def add_plot_canvas_new4(self):
+    def add_plot_canvas_new4(self, arg1, arg2, arg3, arg4):
         # # Main
         self.canvas_frame = QGroupBox("")
         layout = QVBoxLayout() 
@@ -136,8 +216,9 @@ class PlotWindow(QDialog):
         layout_top = QHBoxLayout()
         self.canvas_TL_frame = QGroupBox("")        
         self.canvas_TR_frame = QGroupBox("")        
-        self.PLOT_TOP_LEFT = PlotCanvas(self.canvas_TL_frame, width=3, height=4)
-        self.PLOT_TOP_RIGHT = PlotCanvas(self.canvas_TR_frame, width=4, height=4)
+        self.PLOT_TOP_LEFT = plot.NewPlotCanvas("StackedBar", in_arg=arg1, width=7, height=4)
+        # self.PLOT_TOP_LEFT = PlotCanvas(self.canvas_TL_frame, width=3, height=4)
+        # self.PLOT_TOP_RIGHT = PlotCanvas(self.canvas_TR_frame, width=4, height=4)
         layout_top.addWidget(self.PLOT_TOP_LEFT)
         layout_top.addWidget(self.PLOT_TOP_RIGHT)
         self.canvas_top_frame.setLayout(layout_top)
@@ -147,8 +228,8 @@ class PlotWindow(QDialog):
         layout_down = QHBoxLayout()
         self.canvas_DL_frame = QGroupBox("")        
         self.canvas_DR_frame = QGroupBox("")        
-        self.PLOT_DOWN_LEFT = PlotCanvas(self.canvas_DL_frame, width=3, height=4)
-        self.PLOT_DOWN_RIGHT = PlotCanvas(self.canvas_DR_frame, width=4, height=4)
+        # self.PLOT_DOWN_LEFT = PlotCanvas(self.canvas_DL_frame, width=3, height=4)
+        # self.PLOT_DOWN_RIGHT = PlotCanvas(self.canvas_DR_frame, width=4, height=4)
         layout_down.addWidget(self.PLOT_DOWN_LEFT)
         layout_down.addWidget(self.PLOT_DOWN_RIGHT)
         self.canvas_down_frame.setLayout(layout_down)
@@ -156,55 +237,7 @@ class PlotWindow(QDialog):
         # # Main again
         layout.addWidget(self.canvas_top_frame)
         layout.addWidget(self.canvas_down_frame)
-        self.canvas_frame.setLayout(layout)  
-
-class NewPlotWindow(QDialog):
-    def __init__(self, used_layout, arg1, style1, title):
-        super().__init__()
-        # self.frame = QGroupBox("Details")
-        layout = QVBoxLayout()
-        self.title = title
-        self.left = 2
-        self.top = 2        
-        self.width = 900
-        self.height = 800
-
-        self.setWindowTitle(self.title)
-        self.setGeometry(self.left, self.top, self.width, self.height)
-
-        if (used_layout == 3):
-            self.add_plot_canvas_new3(arg1,style1)
-        else:
-            self.add_plot_canvas_new4()                                    
-
-        layout.addWidget(self.canvas_frame)
-
-        self.setLayout(layout)      
-
-    def add_plot_canvas_new3(self, arg1, style1):
-        # # Main
-        self.canvas_frame = QGroupBox("")
-        layout = QVBoxLayout() 
-
-        # # TOP
-        self.PLOT_UP = NewPlotCanvas(in_arg=arg1, width=7, height=4)
-        layout.addWidget(self.PLOT_UP)
-
-        # # # Bottom
-        self.canvas_down_frame = QGroupBox("")        
-        layout_down = QHBoxLayout()
-        self.canvas_DL_frame = QGroupBox("")        
-        self.canvas_DR_frame = QGroupBox("")        
-        # self.PLOT_DOWN_LEFT = PlotCanvas(self.canvas_DL_frame, width=3, height=4)
-        # self.PLOT_DOWN_RIGHT = PlotCanvas(self.canvas_DR_frame, width=4, height=4)
-        # layout_down.addWidget(self.PLOT_DOWN_LEFT)
-        # layout_down.addWidget(self.PLOT_DOWN_RIGHT)
-        self.canvas_down_frame.setLayout(layout_down)
-
-        # # Main again
-        # layout.addWidget(self.canvas_frame)
-        layout.addWidget(self.canvas_down_frame)
-        self.canvas_frame.setLayout(layout) 
+        self.canvas_frame.setLayout(layout)           
 
 
 class Second(QDialog):
@@ -412,11 +445,6 @@ class App(QDialog):
 
     def on_pushButton_inout(self):
         self.set_dates()
-
-        # self.new_plot_window3.show()
-        # self.show() 
-
-
         if self.radioPlot1.isChecked():
             style = "Bar"
         else:
@@ -425,16 +453,18 @@ class App(QDialog):
         if (self.ComboBoxInOut.currentText() == "Einnahmen"):
             arguments = [self.DATA.IN, self.KEYS.IN,
                 self.ComboBoxStart.currentText(), self.ComboBoxEnd.currentText()]
-            self.update_data(self.DATA.IN, self.KEYS.IN,self.date_start, self.date_end,True)
+            self.update_data(self.DATA.IN, self.KEYS.IN,
+                self.date_start, self.date_end,True)
         else:           
             arguments = [self.DATA.OUT, self.KEYS.OUT,
                 self.ComboBoxStart.currentText(), self.ComboBoxEnd.currentText()]
-            self.update_data(self.DATA.OUT, self.KEYS.OUT,self.date_start, self.date_end,True)    
-        # self.new_plot_window3.PLOT_UP.update_plot(*arguments,style) 
-        # self.new_plot_window3.PLOT_DOWN_LEFT.update_plot(*arguments,"Pie")
-        # self.new_plot_window3.PLOT_DOWN_RIGHT.update_plot(*arguments,"BarAverage")  
+            self.update_data(self.DATA.OUT, self.KEYS.OUT,
+                self.date_start, self.date_end,True)    
 
-        self.new_plot_window3 = NewPlotWindow(3, arguments,"BAR","Plots")
+        self.new_plot_window3 = NewPlotWindow(3, arg1=[*analyse.prepare_stacked_bar(*arguments)],
+            arg2=[*analyse.prepare_pie_chart(*arguments)], 
+            arg3=[*analyse.prepare_horizontal_bar(*arguments)], 
+            title="Plots")
         self.new_plot_window3.show()
         
 
@@ -444,13 +474,28 @@ class App(QDialog):
 
     def on_pushButton_accounts(self):  
         self.set_dates()        
-        self.new_plot_window4.PLOT_TOP_RIGHT.update_plot_account(self.DATA.changes, self.KEYS.OUT,
-            self.date_start, self.date_end,"Bar")                    
-        self.new_plot_window4.PLOT_DOWN_RIGHT.update_plot_account(self.DATA.transfers, self.KEYS.OUT,
-            self.date_start, self.date_end,"Diff")                    
-        self.new_plot_window4.PLOT_DOWN_LEFT.update_plot_account(self.DATA.changes, self.KEYS.OUT,
-            self.date_start, self.date_end,"Legend")                    
-        self.update_data(self.DATA.inout_account, self.KEYS.OUT,self.ComboBoxStart.currentText(), self.ComboBoxEnd.currentText(),True)    
+        # self.new_plot_window4.PLOT_TOP_RIGHT.update_plot_account(self.DATA.changes, self.KEYS.OUT,
+        #     self.date_start, self.date_end,"Bar")                    
+        # self.new_plot_window4.PLOT_DOWN_RIGHT.update_plot_account(self.DATA.transfers, self.KEYS.OUT,
+        #     self.date_start, self.date_end,"Diff")                    
+        # self.new_plot_window4.PLOT_DOWN_LEFT.update_plot_account(self.DATA.changes, self.KEYS.OUT,
+        #     self.date_start, self.date_end,"Legend")                    
+
+        self.update_data(self.DATA.inout_account, self.KEYS.OUT,
+            self.date_start, self.date_end,True)    
+
+        arguments = [self.DATA.changes, self.KEYS.OUT,
+                self.date_start, self.date_end]
+        arguments_diff = [self.DATA.transfers, self.KEYS.OUT,
+                self.date_start, self.date_end]
+
+        self.new_plot_window4 = NewPlotWindow(4, arg1=[*analyse.prepare_stacked_bar2(*arguments)],
+            arg2=[], 
+            arg3=[*analyse.prepare_horizontal_bar(*arguments)], 
+            arg4=[],
+            title="Plots")
+        self.new_plot_window4.show()
+
 
     def on_pushButton_stocks(self):  
         self.set_dates()        
@@ -470,105 +515,9 @@ class App(QDialog):
         layout.addStretch()
         self.data_frame.setLayout(layout)        
 
-
-    # def add_plot_canvas(self):
-    #     # # Main
-    #     self.canvas_frame = QGroupBox("")
-    #     layout = QVBoxLayout() 
-
-    #     # # TOP
-    #     self.PLOT_UP = PlotCanvas(self.canvas_frame, width=7, height=4)
-    #     layout.addWidget(self.PLOT_UP)
-
-    #     # # # Bottom
-    #     self.canvas_down_frame = QGroupBox("")        
-    #     layout_down = QHBoxLayout()
-    #     self.canvas_DL_frame = QGroupBox("")        
-    #     self.canvas_DR_frame = QGroupBox("")        
-    #     self.PLOT_DOWN_LEFT = PlotCanvas(self.canvas_DL_frame, width=3, height=4)
-    #     self.PLOT_DOWN_RIGHT = PlotCanvas(self.canvas_DR_frame, width=4, height=4)
-    #     layout_down.addWidget(self.PLOT_DOWN_LEFT)
-    #     layout_down.addWidget(self.PLOT_DOWN_RIGHT)
-    #     self.canvas_down_frame.setLayout(layout_down)
-
-    #     # # Main again
-    #     # layout.addWidget(self.canvas_frame)
-    #     layout.addWidget(self.canvas_down_frame)
-    #     self.canvas_frame.setLayout(layout)
-
-    # def add_plot_canvas_new3(self):
-    #     # # Main
-    #     self.canvas_frame = QGroupBox("")
-    #     layout = QVBoxLayout() 
-
-    #     # # TOP
-    #     self.PLOT_UP = PlotCanvas(self.canvas_frame, width=7, height=4)
-    #     layout.addWidget(self.PLOT_UP)
-
-    #     # # # Bottom
-    #     self.canvas_down_frame = QGroupBox("")        
-    #     layout_down = QHBoxLayout()
-    #     self.canvas_DL_frame = QGroupBox("")        
-    #     self.canvas_DR_frame = QGroupBox("")        
-    #     self.PLOT_DOWN_LEFT = PlotCanvas(self.canvas_DL_frame, width=3, height=4)
-    #     self.PLOT_DOWN_RIGHT = PlotCanvas(self.canvas_DR_frame, width=4, height=4)
-    #     layout_down.addWidget(self.PLOT_DOWN_LEFT)
-    #     layout_down.addWidget(self.PLOT_DOWN_RIGHT)
-    #     self.canvas_down_frame.setLayout(layout_down)
-
-    #     # # Main again
-    #     # layout.addWidget(self.canvas_frame)
-    #     layout.addWidget(self.canvas_down_frame)
-    #     self.canvas_frame.setLayout(layout) 
-
-    # def add_plot_canvas_new4(self):
-    #     # # Main
-    #     self.canvas_frame = QGroupBox("")
-    #     layout = QVBoxLayout() 
-
-    #     # # TOP
-    #     self.canvas_top_frame = QGroupBox("")        
-    #     layout_top = QHBoxLayout()
-    #     self.canvas_TL_frame = QGroupBox("")        
-    #     self.canvas_TR_frame = QGroupBox("")        
-    #     self.PLOT_TOP_LEFT = PlotCanvas(self.canvas_TL_frame, width=3, height=4)
-    #     self.PLOT_TOP_RIGHT = PlotCanvas(self.canvas_TR_frame, width=4, height=4)
-    #     layout_top.addWidget(self.PLOT_TOP_LEFT)
-    #     layout_top.addWidget(self.PLOT_TOP_RIGHT)
-    #     self.canvas_top_frame.setLayout(layout_top)
-
-    #     # # # Bottom
-    #     self.canvas_down_frame = QGroupBox("")        
-    #     layout_down = QHBoxLayout()
-    #     self.canvas_DL_frame = QGroupBox("")        
-    #     self.canvas_DR_frame = QGroupBox("")        
-    #     self.PLOT_DOWN_LEFT = PlotCanvas(self.canvas_DL_frame, width=3, height=4)
-    #     self.PLOT_DOWN_RIGHT = PlotCanvas(self.canvas_DR_frame, width=4, height=4)
-    #     layout_down.addWidget(self.PLOT_DOWN_LEFT)
-    #     layout_down.addWidget(self.PLOT_DOWN_RIGHT)
-    #     self.canvas_down_frame.setLayout(layout_down)
-
-    #     # # Main again
-    #     layout.addWidget(self.canvas_top_frame)
-    #     layout.addWidget(self.canvas_down_frame)
-    #     self.canvas_frame.setLayout(layout) 
-        
-
-
     def initUI(self, plots):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
-
-        # if (plots ==3):
-        #     self.add_plot_canvas_new3()
-        # else:
-        #     self.add_plot_canvas_new4()
-
-        # self.new_plot_window3 = PlotWindow(3,"Plots")
-        # self.new_plot_window3.show()
-
-        # self.new_plot_window4 = PlotWindow(4,"Plots")
-        # self.new_plot_window4.show()
 
         self.add_selection_group()
         self.add_data_group()
@@ -584,11 +533,6 @@ class App(QDialog):
         self.left_frame.setLayout(layout_left)
         self.mainLayout.addWidget(self.left_frame)
 
-        # self.right_frame = QGroupBox("")
-        # self.layout_right = QVBoxLayout()
-        # self.layout_right.addWidget(self.canvas_frame)
-        # self.right_frame.setLayout(self.layout_right)
-        # self.mainLayout.addWidget(self.right_frame)
         self.setLayout(self.mainLayout)
         # mainLayout
 
@@ -648,282 +592,167 @@ class DataTabs():
 
 
  
-class PlotCanvas(FigureCanvas):
-    def __init__(self, parent=None, width=5, height=4):
-        plt.ion()
-        fig = Figure(figsize=(width, height))
-        self.axes = fig.add_subplot(111)
+# class PlotCanvas(FigureCanvas):
+#     def __init__(self, parent=None, width=5, height=4):
+#         plt.ion()
+#         fig = Figure(figsize=(width, height))
+#         self.axes = fig.add_subplot(111)
  
-        FigureCanvas.__init__(self, fig)
-        self.setParent(parent)
-        fig.tight_layout()
-        self.plot()
+#         FigureCanvas.__init__(self, fig)
+#         self.setParent(parent)
+#         fig.tight_layout()
+#         self.plot()
  
  
-    def plot(self):
-        data = [0]
-        ax = self.figure.add_subplot(111)
-        ax.plot(data, 'r-')
-        # ax.set_title('PyQt Matplotlib Example')
-        self.draw()
+#     def plot(self):
+#         data = [0]
+#         ax = self.figure.add_subplot(111)
+#         ax.plot(data, 'r-')
+#         # ax.set_title('PyQt Matplotlib Example')
+#         self.draw()
 
-    def update_plot(self,data,keywords,start,end,style):
-
-
-        self.figure.clf()
-        ax = self.figure.add_subplot(111)
-        if style == "Bar":
-            self.figure, ax = plot.HistPlot_InOut(data,keywords,start,end,True, 8.,3.5)
-        elif style == "Linear":
-            self.figure, ax = plot.HistPlot_InOut(data,keywords,start,end,False,8.,3.5)
-        elif style == "Pie":
-            self.figure, ax = plot.PieChart(data,keywords,start,end,3.5,4) 
-        elif style == "BarAverage":
-            self.figure, ax = plot.BarAverage_InOut(data,keywords,start,end,4,3.5)                        
-
-        self.draw()    
-        self.show() 
-
-    def update_plot_account(self,data,keywords,start,end,style):
-        self.figure.clf()
-        ax = self.figure.add_subplot(111)
-        if style == "Bar":
-            self.figure, ax = plot.HistPlot_Account(data,start,end,True,4,3.5)
-        elif style == "Linear":
-            self.figure, ax = plot.HistPlot_Account(data,start,end,False,4,3.5)
-        elif style == "Pie":
-            self.figure, ax = plot.HistPlot_Changes(data,start,end,3.5,4) 
-        elif style == "Diff":
-            self.figure, ax = plot.HistPlot_Changes(data,start,end,4,3.5)   
-        elif style == "Legend":
-            self.figure, ax = plot.BarAverage_Accounts(data,start,end,4,3.5)                     
-        # new_legend.show()
+#     def update_plot(self,data,keywords,start,end,style):
 
 
-        self.draw()    
-        self.show() 
+#         self.figure.clf()
+#         ax = self.figure.add_subplot(111)
+#         if style == "Bar":
+#             self.figure, ax = plot.HistPlot_InOut(data,keywords,start,end,True, 8.,3.5)
+#         elif style == "Linear":
+#             self.figure, ax = plot.HistPlot_InOut(data,keywords,start,end,False,8.,3.5)
+#         elif style == "Pie":
+#             self.figure, ax = plot.PieChart(data,keywords,start,end,3.5,4) 
+#         elif style == "BarAverage":
+#             self.figure, ax = plot.BarAverage_InOut(data,keywords,start,end,4,3.5)                        
 
-    def update_plot_stocks(self,data,start,end, FONDS, STOCKS, style):
-        self.figure.clf()
-        ax = self.figure.add_subplot(111)
-        if style == "WIN":
-            x,values = analyse.generate_total_changes(data,fonds=FONDS, stocks = STOCKS)
-            #dates = [datetime.datetime.strptime(d,'%d.%m.%Y') for d in x]
-            dates = [d for d in x]
-            self.figure, ax = plot.ScatterDatePlot(dates, values, 8., 4., False)
-        elif style == "DIFF":
-            x,values = analyse.generate_daily_changes(data,fonds=FONDS, stocks = STOCKS)
-#            dates = [datetime.datetime.strptime(d,'%d.%m.%Y') for d in x]
-            dates = [d for d in x]
-            self.figure, ax = plot.ScatterDatePlot(dates, values, 8., 4., True)
+#         self.draw()    
+#         self.show() 
+
+#     def update_plot_account(self,data,keywords,start,end,style):
+#         self.figure.clf()
+#         ax = self.figure.add_subplot(111)
+#         if style == "Bar":
+#             self.figure, ax = plot.HistPlot_Account(data,start,end,True,4,3.5)
+#         elif style == "Linear":
+#             self.figure, ax = plot.HistPlot_Account(data,start,end,False,4,3.5)
+#         elif style == "Pie":
+#             self.figure, ax = plot.HistPlot_Changes(data,start,end,3.5,4) 
+#         elif style == "Diff":
+#             self.figure, ax = plot.HistPlot_Changes(data,start,end,4,3.5)   
+#         elif style == "Legend":
+#             self.figure, ax = plot.BarAverage_Accounts(data,start,end,4,3.5)                     
+#         # new_legend.show()
 
 
-        self.draw()    
-        self.show()         
+#         self.draw()    
+#         self.show() 
+
+#     def update_plot_stocks(self,data,start,end, FONDS, STOCKS, style):
+#         self.figure.clf()
+#         ax = self.figure.add_subplot(111)
+#         if style == "WIN":
+#             x,values = analyse.generate_total_changes(data,fonds=FONDS, stocks = STOCKS)
+#             #dates = [datetime.datetime.strptime(d,'%d.%m.%Y') for d in x]
+#             dates = [d for d in x]
+#             self.figure, ax = plot.ScatterDatePlot(dates, values, 8., 4., False)
+#         elif style == "DIFF":
+#             x,values = analyse.generate_daily_changes(data,fonds=FONDS, stocks = STOCKS)
+# #            dates = [datetime.datetime.strptime(d,'%d.%m.%Y') for d in x]
+#             dates = [d for d in x]
+#             self.figure, ax = plot.ScatterDatePlot(dates, values, 8., 4., True)
+
+
+#         self.draw()    
+#         self.show()         
 
 # class NewPlotCanvas(QMainWindow):
 #     def __init__(self, in_arg=[], parent=None, width=5, height=4):
-#         # plt.ion()l
-#         self.main_frame = QWidget()
+#     #  def __init__(self, parent=None):
 #         QMainWindow.__init__(self, parent)
-#         self.figure = Figure(figsize=(width, height))
+#         #self.x, self.y = self.get_data()
+#         self.create_main_frame()
+#         self.on_draw(in_arg[0],in_arg[1],in_arg[2],in_arg[3],width,height)
 
- 
-#         # FigureCanvas.__init__(self, self.fig)
-#         self.canvas = FigureCanvas(self.figure)
-#         self.canvas.setParent(parent)
+#     def create_main_frame(self):
+#         self.main_frame = QWidget()
+
+#         self.fig = Figure((5.0, 4.0), dpi=100)
+#         self.canvas = FigureCanvas(self.fig)
+#         self.canvas.setParent(self.main_frame)
 #         self.canvas.setFocusPolicy( Qt.ClickFocus )
 #         self.canvas.setFocus()
-#         # fig.tight_layout()
-#         # self.plot(*in_arg, width, height)
-#         in_data = in_arg[0]
-#         keywords = in_arg[1]
-#         start = in_arg[2]
-#         end = in_arg[3]
-
+#         self.mpl_toolbar = NavigationToolbar(self.canvas, self.main_frame)
+#         self.canvas.mpl_connect("motion_notify_event", self.hover)
 #         vbox = QVBoxLayout()
 #         vbox.addWidget(self.canvas)         # the matplotlib canvas
 #         vbox.addWidget(self.mpl_toolbar)
 #         self.main_frame.setLayout(vbox)
 #         self.setCentralWidget(self.main_frame)
 
- 
-#     # # def plot(self, in_data, keywords, start, end, width, height):
-#     #     # data = [0]
-#     #     # ax = self.figure.add_subplot(111)
-#     #     # ax.plot(data, 'r-')
-#     #     # # ax.set_title('PyQt Matplotlib Example')
-#     #     # self.draw()        
+#     def on_draw(self, in_data, keywords, start, end, width, height):
+#         sum_all = analyse.summary_months(in_data, list(keywords.keys()))
+#         dates = analyse.find_dates(sum_all)
+#         dates = [d for d in dates if ( datetime.datetime.strptime(end, "%m/%Y").date() >=  datetime.datetime.strptime(d, "%m/%Y").date()>=  datetime.datetime.strptime(start, "%m/%Y").date())]
 
-#     #     sum_all = analyse.summary_months(in_data, list(keywords.keys()))
-#     #     dates = analyse.find_dates(sum_all)
-#     #     dates = [d for d in dates if ( datetime.datetime.strptime(end, "%m/%Y").date() >=  datetime.datetime.strptime(d, "%m/%Y").date()>=  datetime.datetime.strptime(start, "%m/%Y").date())]
+#         arranged = analyse.arrange_sum_by_data2(sum_all,dates)
+#         data = [[abs(x) for x in y] for y in arranged]
+#         labels = list(in_data.keys())
 
-#     #     arranged = analyse.arrange_sum_by_data2(sum_all,dates)
-#     #     data = [[abs(x) for x in y] for y in arranged]
-#     #     labels = list(in_data.keys())
+#         dim = len(data[0])
+#         w = 2.
+#         # dimw = w / dim
+#         dimw = 2
+#         # target, ax = plt.subplots()
+#         # ax = self.figure.add_subplot(111)
+#         x = 3*np.arange(len(data))
+#         bot = [0 for x in data]
+#         self.fig.clear()
+#         self.axes = self.fig.add_subplot(111)
 
-#     #     dim = len(data[0])
-#     #     w = 2.
-#     #     # dimw = w / dim
-#     #     dimw = 2
-#     #     # target, ax = plt.subplots()
-#     #     ax = self.figure.add_subplot(111)
-#     #     x = 3*np.arange(len(data))
-#     #     bot = [0 for x in data]
-#     #     # for i in range(len(labels)):
-#     #     #     y = [d[i] for d in data]
-#     #     #     print(i, x, y, labels[i])
-#     #     #     # if (bar):
-#     #     #     b = ax.bar(x, y, dimw, color=plot.use_colors[i], bottom=0,label=labels[i])
-#     #     #     bot += y
-#     #     #     # else:    
-#     #     #         # b = ax.plot(x, y, color=use_colors[i], label=labels[i])
-
-#     #     ax.scatter(*np.random.random((2, 26)))
-#     #     ax.set_xticks(x + dimw / 2, dates)    
-#     #     ax.set_ylabel('Euro')
-
-#     #     # mplcursors.cursor().connect(
-#     #     #     "add", lambda sel: sel.annotation.set_text(sel.artist.get_label()))
-#     #     mplcursors.cursor(hover=True)
-#     #     # datacursor(hover=True)
-#     #     plt.xticks(x,[d.replace(".20","/") for d in dates])
-#     #     # target.set_size_inches(width, height)
-#     #     # self.draw()
-#     #     self.show()
-#         # fig, self.ax = plt.subplots()
-#         # self.canvas.mplcursors.cursor(hover=True)
-#         self.axes = self.figure.add_subplot(111)
-#         self.ax = self.figure.add_subplot(111)
-#         self.ax.scatter(*np.random.random((2, 26)))
-#         self.ax.set_title("Mouse over a point")
-
-#         # print(self.figure)
-#         # plt.show()        
-#         self.canvas.draw()
-
-class NewPlotCanvas(QMainWindow):
-    def __init__(self, in_arg=[], parent=None, width=5, height=4):
-    #  def __init__(self, parent=None):
-        QMainWindow.__init__(self, parent)
-        #self.x, self.y = self.get_data()
-        self.data = self.get_data2()
-        self.create_main_frame()
-        self.on_draw(in_arg[0],in_arg[1],in_arg[2],in_arg[3],width,height)
-
-    def create_main_frame(self):
-        self.main_frame = QWidget()
-
-        self.fig = Figure((5.0, 4.0), dpi=100)
-        self.canvas = FigureCanvas(self.fig)
-        self.canvas.setParent(self.main_frame)
-        self.canvas.setFocusPolicy( Qt.ClickFocus )
-        self.canvas.setFocus()
-        self.mpl_toolbar = NavigationToolbar(self.canvas, self.main_frame)
-        self.canvas.mpl_connect("motion_notify_event", self.hover)
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.canvas)         # the matplotlib canvas
-        vbox.addWidget(self.mpl_toolbar)
-        self.main_frame.setLayout(vbox)
-        self.setCentralWidget(self.main_frame)
-
-    def get_data2(self):
-        return np.arange(20).reshape([4,5]).copy()
-
-    # def on_draw(self):
-    #     self.fig.clear()
-    #     self.axes = self.fig.add_subplot(111)
-    #     self.sc = self.axes.scatter(*np.random.random((2, 26)))
-    #     self.annot = self.axes.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
-    #                         bbox=dict(boxstyle="round", fc="w"),
-    #                         arrowprops=dict(arrowstyle="->"))
-    #     self.annot.set_visible(False)
-    #     self.canvas.draw()
-
-    def on_draw(self, in_data, keywords, start, end, width, height):
-        sum_all = analyse.summary_months(in_data, list(keywords.keys()))
-        dates = analyse.find_dates(sum_all)
-        dates = [d for d in dates if ( datetime.datetime.strptime(end, "%m/%Y").date() >=  datetime.datetime.strptime(d, "%m/%Y").date()>=  datetime.datetime.strptime(start, "%m/%Y").date())]
-
-        arranged = analyse.arrange_sum_by_data2(sum_all,dates)
-        data = [[abs(x) for x in y] for y in arranged]
-        labels = list(in_data.keys())
-
-        dim = len(data[0])
-        w = 2.
-        # dimw = w / dim
-        dimw = 2
-        # target, ax = plt.subplots()
-        # ax = self.figure.add_subplot(111)
-        x = 3*np.arange(len(data))
-        bot = [0 for x in data]
-        self.fig.clear()
-        self.axes = self.fig.add_subplot(111)
-        # self.sc = self.axes.bar([1,2,3], [1,2,3], dimw, color=plot.use_colors[1], bottom=0,label=labels[1])
-        # self.label_store={}
-        # for bar in self.sc:
-        #     self.label_store[bar] = labels[1]
-
-        self.sc = []
-        self.all_label = []
-        for i in range(len(labels)):
-            self.label_store={}
-            y = [d[i] for d in data]
-            # if (bar):
-            self.sc.append(self.axes.bar(x, y, dimw, color=plot.use_colors[i], bottom=0,label=labels[i]))
-            for bar in self.sc[-1]:
-                  self.label_store[bar] = labels[i]   
-                  print("LS",self.label_store)         
-            bot += y
-            self.all_label.append(self.label_store)
-            print("ALL",self.all_label)
-            # else:    
-                # b = ax.plot(x, y, color=use_colors[i], label=labels[i])
+#         self.sc = []
+#         self.all_label = []
+#         for i in range(len(labels)):
+#             self.label_store={}
+#             y = [d[i] for d in data]
+#             # if (bar):
+#             self.sc.append(self.axes.bar(x, y, dimw, color=plot.use_colors[i], bottom=0,label=labels[i]))
+#             for bar in self.sc[-1]:
+#                   self.label_store[bar] = labels[i]   
+#                   print("LS",self.label_store)         
+#             bot += y
+#             self.all_label.append(self.label_store)
+#             print("ALL",self.all_label)
+#             # else:    
+#                 # b = ax.plot(x, y, color=use_colors[i], label=labels[i])
 
 
-        self.annot = self.axes.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
-                            bbox=dict(fc="w"),
-                            arrowprops=dict(arrowstyle="->"))
-        self.annot.set_visible(False)
-        self.canvas.draw()        
+#         self.annot = self.axes.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
+#                             bbox=dict(fc="w"),
+#                             arrowprops=dict(arrowstyle="->"))
+#         self.annot.set_visible(False)
+#         self.canvas.draw()        
 
 
-    def on_key_press(self, event):
-        print('you pressed', event.key)
-
-    # def update_annot(self,ind,bar):
-    #     print("POS",ind)
-    #     pos = bar.get_offsets()[ind["ind"][0]]
-
-    #     self.annot.xy = pos
-    #     text = "hello"
-    #     self.annot.set_text(ind)
-    #     # self.annot.get_bbox_patch().set_facecolor(cmap(norm(c[ind["ind"][0]])))
-    #     self.annot.get_bbox_patch().set_alpha(0.4)
-    def update_annot(self,bar,label):
-        x = bar.get_x()+bar.get_width()/2.
-        y = bar.get_y()+bar.get_height()
-        # print(self.label_store[bar])
-        self.annot.xy = (x,y)
-        text = label+"\n (" + str(y) + " Eur)" #"#self.label_store[bar]
-        self.annot.set_text(text)
-        self.annot.get_bbox_patch().set_alpha(0.4)        
+#     def update_annot(self,bar,label):
+#         x = bar.get_x()+bar.get_width()/2.
+#         y = bar.get_y()+bar.get_height()
+#         self.annot.xy = (x,y)
+#         text = label+"\n (" + str(y) + " Eur)" #"#self.label_store[bar]
+#         self.annot.set_text(text)
+#         self.annot.get_bbox_patch().set_alpha(0.4)        
 
 
-    def hover(self,event):
-       vis = self.annot.get_visible()
-        # self.annot.set_visible(True)
-        # self.fig.canvas.draw_idle()
-       if event.inaxes == self.axes:
-         for s, l in zip(self.sc, self.all_label):  
-          for bar in s:  
-            cont, ind = bar.contains(event)
-            if cont:
-                self.update_annot(bar, l[bar])
-                self.annot.set_visible(True)
-                self.fig.canvas.draw_idle()
-            else:
-                if vis:
-                    self.annot.set_visible(False)
-                    self.fig.canvas.draw_idle()
+#     def hover(self,event):
+#         vis = self.annot.get_visible()
+#         if event.inaxes == self.axes:
+#             for s, l in zip(self.sc, self.all_label):  
+#                 for bar in s:  
+#                     cont, ind = bar.contains(event)
+#                     if cont:
+#                         self.update_annot(bar, l[bar])
+#                         self.annot.set_visible(True)
+#                         self.fig.canvas.draw_idle()
+#                 else:
+#                     if vis:
+#                         self.annot.set_visible(False)
+#                         self.fig.canvas.draw_idle()

@@ -115,7 +115,7 @@ class DepotParser(Parser):
         self.fonds = []
         self.ISIN = {}
         for file in listOfFile:
-            date = datetime.datetime.strptime(file[6:16], '%d.%m.%Y')            
+            date = datetime.datetime.strptime(file[6:16], '%d.%m.%Y').date()            
             try:
                 self.all_information[date], new_stocks, new_fonds = self.parse(dirName,file)
                 self.stocks += (new_stocks)

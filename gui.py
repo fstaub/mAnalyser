@@ -85,7 +85,7 @@ class Detail_Window(QDialog):
 class NewPlotWindow(QDialog):
     ''' Creates a new window which contains the plots
     '''
-    def __init__(self, used_layout, arg1=[], arg2=[], arg3=[], arg4=[], title=""):
+    def __init__(self, arg1=[], arg2=[], arg3=[], arg4=[], title=""):
         super().__init__()
         # self.frame = QGroupBox("Details")
         layout = QVBoxLayout()
@@ -98,39 +98,13 @@ class NewPlotWindow(QDialog):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
-        if (used_layout == 3):
-            self.add_plot_canvas_new3(arg1, arg2, arg3)
-        else:
-            self.add_plot_canvas_new4(arg1, arg2, arg3, arg4)                                    
-
+        # if (used_layout == 3):
+        #     self.add_plot_canvas_new3(arg1, arg2, arg3)
+        # else:
+        
+        self.add_plot_canvas_new4(arg1, arg2, arg3, arg4)                                    
         layout.addWidget(self.canvas_frame)
-
         self.setLayout(layout)      
-
-    def add_plot_canvas_new3(self, arg1, arg2, arg3):
-        # # Main
-        self.canvas_frame = QGroupBox("")
-        layout = QVBoxLayout() 
-
-        # # TOP
-        self.PLOT_UP = plot.NewPlotCanvas("StackedBar", in_arg=arg1, width=7, height=4)
-        layout.addWidget(self.PLOT_UP)
-
-        # # # Bottom
-        self.canvas_down_frame = QGroupBox("")        
-        layout_down = QHBoxLayout()
-        self.canvas_DL_frame = QGroupBox("")        
-        self.canvas_DR_frame = QGroupBox("")        
-        self.PLOT_DOWN_LEFT = plot.NewPlotCanvas("PieChart", in_arg=arg2, width=3, height=4) #PlotCanvas(self.canvas_DL_frame, width=3, height=4)
-        self.PLOT_DOWN_RIGHT = plot.NewPlotCanvas("HorizontalBar", in_arg=arg3, width=4, height=4)  # PlotCanvas(self.canvas_DR_frame, width=4, height=4)
-        layout_down.addWidget(self.PLOT_DOWN_LEFT)
-        layout_down.addWidget(self.PLOT_DOWN_RIGHT)
-        self.canvas_down_frame.setLayout(layout_down)
-
-        # # Main again
-        # layout.addWidget(self.canvas_frame)
-        layout.addWidget(self.canvas_down_frame)
-        self.canvas_frame.setLayout(layout)
 
     def add_plot_canvas_new4(self, arg1, arg2, arg3, arg4):
         # # Main
@@ -142,9 +116,9 @@ class NewPlotWindow(QDialog):
         layout_top = QHBoxLayout()
         self.canvas_TL_frame = QGroupBox("")        
         self.canvas_TR_frame = QGroupBox("")        
-        self.PLOT_TOP_LEFT = plot.NewPlotCanvas("StackedBar", in_arg=arg1, width=7, height=4)
-        # self.PLOT_TOP_LEFT = PlotCanvas(self.canvas_TL_frame, width=3, height=4)
-        # self.PLOT_TOP_RIGHT = PlotCanvas(self.canvas_TR_frame, width=4, height=4)
+        
+        self.PLOT_TOP_LEFT = plot.NewPlotCanvas(arg1[0], in_arg=arg1[1:], width=7, height=4)
+        self.PLOT_TOP_RIGHT = plot.NewPlotCanvas(arg3[0], in_arg=arg3[1:], width=7, height=4)
         layout_top.addWidget(self.PLOT_TOP_LEFT)
         layout_top.addWidget(self.PLOT_TOP_RIGHT)
         self.canvas_top_frame.setLayout(layout_top)
@@ -154,10 +128,12 @@ class NewPlotWindow(QDialog):
         layout_down = QHBoxLayout()
         self.canvas_DL_frame = QGroupBox("")        
         self.canvas_DR_frame = QGroupBox("")        
-        # self.PLOT_DOWN_LEFT = PlotCanvas(self.canvas_DL_frame, width=3, height=4)
-        # self.PLOT_DOWN_RIGHT = PlotCanvas(self.canvas_DR_frame, width=4, height=4)
+
+        self.PLOT_DOWN_LEFT = plot.NewPlotCanvas(arg2[0], in_arg=arg2[1:], width=3.5, height=4)
+        self.PLOT_DOWN_RIGHT = plot.NewPlotCanvas(arg4[0], in_arg=arg4[1:], width=3.5, height=4)
         layout_down.addWidget(self.PLOT_DOWN_LEFT)
         layout_down.addWidget(self.PLOT_DOWN_RIGHT)
+
         self.canvas_down_frame.setLayout(layout_down)
 
         # # Main again
@@ -310,7 +286,7 @@ class InOutTab(OptionsWidget):
 
     def update_data(self, in_data, keywords, start, end):
         dates = analyse.generate_dates(start, end)
-        use_data = analyse.group_data_by_month(in_data,dates)
+        use_data = analyse.group_data_by_month(in_data, dates)
         use_data['Durchschnitt'] = analyse.average_months(in_data, start, end)
         data_tab = DataTabs(self.parent.data_main_tab, use_data)
 
@@ -325,20 +301,20 @@ class InOutTab(OptionsWidget):
                 all_data = self.parent.DATA.OUT
 
         selected_keys =  {key:value for key, value in self.parent.KEYS.IN.items() if key in self.parent.KEYS.is_included }
-        arguments = [all_data, selected_keys,
-                    self.ComboBoxStart.currentText(), self.ComboBoxEnd.currentText()]
+        arguments = [all_data, selected_keys, self.date_start, self.date_end]
 
-        self.update_data(all_data, all_keys,
-                    self.date_start, self.date_end)    
+        self.update_data(*arguments)    
 
-        self.new_plot_window3 = NewPlotWindow(3, arg1=[*analyse.prepare_stacked_bar(*arguments)],
-                arg2=[*analyse.prepare_pie_chart(*arguments)], 
-                arg3=[*analyse.prepare_horizontal_bar(*arguments)], 
+        self.new_plot_window = NewPlotWindow( 
+                arg1=["StackedBar", *analyse.prepare_stacked_bar(*arguments)],
+                arg2=["LogLinear", *analyse.prepare_stacked_bar(*arguments)],
+                arg3=["PieChart", *analyse.prepare_pie_chart(*arguments)], 
+                arg4=["HorizontalBarLog", *analyse.prepare_horizontal_bar(*arguments)], 
                 title="Plots")
 
-        self.new_plot_window3.show()
-        self.new_plot_window3.canvas_down_frame.setTitle("Monatsdurchschnitt")
-        self.new_plot_window3.canvas_frame.setTitle("Monatswerte")
+        self.new_plot_window.show()
+        self.new_plot_window.canvas_down_frame.setTitle("Monatsdurchschnitt")
+        self.new_plot_window.canvas_frame.setTitle("Monatswerte")
 
 class AccountTab(OptionsWidget):
     def __init__(self, parent):
@@ -353,7 +329,31 @@ class AccountTab(OptionsWidget):
         print("pushed in out")
 
     def on_pushButton_start(self):
-        print("pushed account") 
+        self.set_dates()        
+
+        self.update_data(self.parent.DATA.inout_account, self.parent.KEYS.OUT,
+            self.date_start, self.date_end)    
+
+        arguments = [self.parent.DATA.changes, self.parent.KEYS.OUT,
+                self.date_start, self.date_end]
+
+        arguments_diff = [self.parent.DATA.transfers, self.parent.KEYS.OUT,
+                self.date_start, self.date_end]
+
+        self.new_plot_window = NewPlotWindow(
+            arg1=["StackedBar", *analyse.prepare_stacked_bar_accounts(*arguments)],
+            arg2=["PlusMinusBar",*analyse.prepare_plusminus_bar(*arguments_diff)], 
+            arg3=["HorizontalBar",*analyse.prepare_horizontal_bar_accounts(*arguments)],                         
+            arg4=["PieChart",*analyse.prepare_horizontal_bar_accounts(*arguments)],
+            title="Plots")
+        self.new_plot_window.show()
+
+    def update_data(self, in_data, keywords, start, end):
+        dates = analyse.generate_dates(start, end)
+        use_data = analyse.group_data_by_month(in_data,dates)
+        data_tab = DataTabs(self.parent.data_main_tab, use_data)
+
+
 
 class StockTab(OptionsWidget):
     def __init__(self, parent):
@@ -361,14 +361,41 @@ class StockTab(OptionsWidget):
 
     def add_contents(self):
         self.add_time_period()
-        self.add_configure()        
+        self.add_configure() 
+        self.add_choice()       
         self.add_start_button()
+
+    def add_choice(self):
+        self.checkAktien = QCheckBox("Aktien")
+        self.checkFonds = QCheckBox("Fonds")
+        self.checkAktien.setChecked(True) 
+        self.checkFonds.setChecked(True) 
+        self.layout.addWidget(QColumn(self.checkAktien, self.checkFonds ))         
 
     def on_pushButton_config(self):
         print("pushed in out")
 
     def on_pushButton_start(self):
-        print("pushed stock")               
+        self.set_dates()        
+        all_keys = []
+        if self.checkFonds.isChecked():
+            all_keys += self.parent.DEPOT.fonds 
+        if self.checkAktien.isChecked():
+            all_keys += self.parent.DEPOT.stocks 
+
+
+        arguments = [self.parent.DEPOT.all_information, all_keys,
+                self.date_start, self.date_end]
+        arguments_total = [self.parent.DEPOT.current_values, all_keys,
+                self.date_start, self.date_end]                
+
+        self.new_plot_window = NewPlotWindow(
+            arg1=["ScatterPlot", *analyse.prepare_scatter_total_change_stocks(*arguments)],
+            arg2=["ScatterPlotBar", *analyse.prepare_scatter_daily_changes_stocks(*arguments)],                                     
+            arg3=["StackedBar", *analyse.prepare_stacked_bar_accounts(*arguments_total)], 
+            arg4=["PieChart", *analyse.prepare_pie_total_stocks(*arguments_total)],
+            title="Plots")
+        self.new_plot_window.show()             
 
 
 class App(QDialog):
@@ -413,87 +440,6 @@ class App(QDialog):
         main_layout.addStretch(1)
         self.selection_frame.setLayout(main_layout)
 
-    # def update_data(self,in_data,keywords,start,end, add_average):
-    #     dates = analyse.generate_dates(start,end)
-    #     print(dates)
-    #     use_data = analyse.group_data_by_month(in_data,dates)
-    #     if add_average:
-    #         use_data['Durchschnitt'] = analyse.average_months(in_data,start,end)
-    #         data_tab = DataTabs(self.data_main_tab, use_data)
-
-    # def set_dates(self):
-    #     self.date_start = datetime.datetime.strptime(self.ComboBoxStart.currentText() ,"%m/%Y").date()
-    #     self.date_end = datetime.datetime.strptime(self.ComboBoxEnd.currentText() ,"%m/%Y").date()        
-
-    # def on_pushButton_inout(self):
-    #     self.set_dates()
-    #     if self.radioPlot1.isChecked():
-    #         style = "Bar"
-    #     else:
-    #         style = "Linear"
-
-    #     if (self.ComboBoxInOut.currentText() == "Einnahmen"):
-    #         arguments = [self.DATA.IN, self.KEYS.IN,
-    #             self.ComboBoxStart.currentText(), self.ComboBoxEnd.currentText()]
-    #         self.update_data(self.DATA.IN, self.KEYS.IN,
-    #             self.date_start, self.date_end,True)
-    #     else:           
-    #         arguments = [self.DATA.OUT, self.KEYS.OUT,
-    #             self.ComboBoxStart.currentText(), self.ComboBoxEnd.currentText()]
-    #         self.update_data(self.DATA.OUT, self.KEYS.OUT,
-    #             self.date_start, self.date_end,True)    
-
-    #     self.new_plot_window3 = NewPlotWindow(3, arg1=[*analyse.prepare_stacked_bar(*arguments)],
-    #         arg2=[*analyse.prepare_pie_chart(*arguments)], 
-    #         arg3=[*analyse.prepare_horizontal_bar(*arguments)], 
-    #         title="Plots")
-    #     self.new_plot_window3.show()
-        
-
-    #     self.new_plot_window3.canvas_down_frame.setTitle("Monatsdurchschnitt")
-    #     self.new_plot_window3.canvas_frame.setTitle("Monatswerte")
-
-
-    # def on_pushButton_accounts(self):  
-    #     self.set_dates()        
-    #     # self.new_plot_window4.PLOT_TOP_RIGHT.update_plot_account(self.DATA.changes, self.KEYS.OUT,
-    #     #     self.date_start, self.date_end,"Bar")                    
-    #     # self.new_plot_window4.PLOT_DOWN_RIGHT.update_plot_account(self.DATA.transfers, self.KEYS.OUT,
-    #     #     self.date_start, self.date_end,"Diff")                    
-    #     # self.new_plot_window4.PLOT_DOWN_LEFT.update_plot_account(self.DATA.changes, self.KEYS.OUT,
-    #     #     self.date_start, self.date_end,"Legend")                    
-
-    #     self.update_data(self.DATA.inout_account, self.KEYS.OUT,
-    #         self.date_start, self.date_end,True)    
-
-    #     arguments = [self.DATA.changes, self.KEYS.OUT,
-    #             self.date_start, self.date_end]
-    #     arguments_diff = [self.DATA.transfers, self.KEYS.OUT,
-    #             self.date_start, self.date_end]
-
-    #     self.new_plot_window4 = NewPlotWindow(4, arg1=[*analyse.prepare_stacked_bar2(*arguments)],
-    #         arg2=[], 
-    #         arg3=[*analyse.prepare_horizontal_bar(*arguments)], 
-    #         arg4=[],
-    #         title="Plots")
-    #     self.new_plot_window4.show()
-
-
-    # def on_pushButton_stocks(self):  
-    #     self.set_dates()        
-    #     self.new_plot_window3.PLOT_UP.update_plot_stocks(self.DEPOT.all_information, 
-    #         self.ComboBoxStart.currentText(), self.ComboBoxEnd.currentText(), 
-    #         self.checkFonds.isChecked(), self.checkAktien.isChecked(), "WIN")                  
-    #     self.new_plot_window3.PLOT_DOWN_LEFT.update_plot_stocks(self.DEPOT.all_information, 
-    #         self.ComboBoxStart.currentText(), self.ComboBoxEnd.currentText(),
-    #         self.checkFonds.isChecked(), self.checkAktien.isChecked(), "DIFF")                  
-
-    # def on_pushButton_clicked(self):
-    #     print("pushed")
-    #     cw = ConfigWindow([self.KEYS.IN,self.KEYS.OUT],["Einnahmen","Ausgaben"],self.KEYS.is_included)
-    #     cw.show()
-    #     # self.main.dialog.show() 
-
     def add_data_group(self):
         self.data_frame = QGroupBox("Data")
         layout = QVBoxLayout()
@@ -530,7 +476,6 @@ class DataTabs():
         self.tab.clear()  
 
         self.generate_tab_content(tabs)
-        print("dataTabs", tabs)
     def generate_tab_content(self, tabs):
             for t in tabs.keys():
                 new_tab=QWidget()

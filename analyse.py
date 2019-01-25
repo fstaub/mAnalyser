@@ -12,7 +12,6 @@ class Balance():
         self.OUT, self.missing_out = self.categorise_money_transfers(self.outgoing_raw,keywords.OUT)        
 
         self.names = names
-        # print(accounts[1].all_information)
         self.get_changes_accounts(accounts)
 
     def collect(self,accounts,names):
@@ -113,8 +112,8 @@ def find_dates2(all_accounts):
     return  sorted(out) 
 
 # MAIN FUNCTIONS
-def summary_months(data,keywords):
-    out = {}
+def summary_months(data, keywords):
+    out = OrderedDict()
     for k in keywords:
         # if k in data:
             out[k] = sum_up_month(data[k])
@@ -131,7 +130,7 @@ def group_data_by_month(in_data, dates):
             sum_up = 0
             for e in in_data[k]:
                 # if e[0][3:] == d:
-                if get_month(e[0]) == d:                
+                if get_month(e[0]) == get_month(d):                
                     new_list.append(e)
                     sum_up +=e[2]
             new_main[k] = {}
@@ -170,8 +169,8 @@ def generate_dates(first,last):
     # end = datetime.datetime.strptime(last, "%m.%Y").date()
     next_month =  add_months(first,1)
     while (next_month <= last):
-        out.append(next_month.strftime("%m.%Y"))
-        out.append(next_month.strftime("%m.%Y"))        
+        # out.append(next_month.strftime("%m.%Y"))
+        out.append(next_month)        
         next_month = add_months(next_month,1)
     return out    
 
@@ -256,7 +255,6 @@ def generate_total_changes(info, fonds=True, stocks=True):
         return dates, values    
 
 def get_month(in_date):
-    print(in_date)
     return  in_date.strftime("%m/%Y")
         
                             
@@ -271,7 +269,7 @@ def prepare_stacked_bar(in_data, keywords, start, end):
         arranged = arrange_sum_by_data2(sum_all,dates)
         data = [[abs(x) for x in y] for y in arranged]
 
-        return data, list(in_data.keys())
+        return data, list(keywords.keys())
 
 def prepare_stacked_bar2(in_data, keywords, start, end):
         # val = []
@@ -292,7 +290,7 @@ def prepare_stacked_bar2(in_data, keywords, start, end):
     
         data = [sum(d) for d in data]
 
-        return out, list(in_data.keys())   
+        return out, list(keywords.keys())   
 
 
 def prepare_pie_chart(in_data, keywords, start, end):
@@ -302,7 +300,7 @@ def prepare_pie_chart(in_data, keywords, start, end):
 
         sizes = [abs(sum([x for x in s.values()])) for s in sum_all.values()]
         sizes = [s/len(dates) for s in sizes]
-        return sizes, list(in_data.keys())
+        return sizes, list(keywords.keys())
 
 def prepare_horizontal_bar(in_data, keywords, start, end):
 #     # data to plot

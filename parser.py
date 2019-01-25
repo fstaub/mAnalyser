@@ -2,6 +2,7 @@ import os
 import json 
 import csv
 import datetime
+import collections
 
 class Parser():
     def filter_redundant(self,data):
@@ -112,6 +113,7 @@ class DepotParser(Parser):
         self.all_information = {}
         self.stocks = []
         self.fonds = []
+        self.ISIN = {}
         for file in listOfFile:
             date = datetime.datetime.strptime(file[6:16], '%d.%m.%Y')            
             try:
@@ -132,17 +134,20 @@ class DepotParser(Parser):
             for row in spamreader:
                 if len(row)>0:
                     if row[0] == "Aktien" or row[0] == "Fonds":
-                        out.append([row[2], int(row[3]), self.format_number(row[5]), self.format_number(row[10])])
+                        if row[1] not in self.ISIN:
+                            self.ISIN[row[1]] = row[2]
+                        out.append([self.ISIN[row[1]], int(row[3]), self.format_number(row[5]), self.format_number(row[10])])
                         if row[0] == "Aktien":
-                            stocks.append(row[2])
+                            stocks.append(self.ISIN[row[1]])
                         else:
-                            fonds.append(row[2])
+                            fonds.append(self.ISIN[row[1]])
         return out, stocks, fonds
 
 class Keywords():
     def __init__(self,file):
         with open(file) as json_data:
-            d = json.load(json_data)
+            d = json.load(json_data, object_pairs_hook=collections.OrderedDict)
         self.IN = d['Einkommen']
         self.OUT = d['Ausgaben']
         self.INTERNAL = d['Internal']
+        self.is_included = list(self.IN.keys()) + list(self.OUT.keys())

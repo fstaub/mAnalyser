@@ -9,7 +9,6 @@ import analyse
 main_path = os.getcwd()
 
 KEYS = parser.Keywords(os.path.join(main_path,"Data","config.json"))
-print("keys",KEYS.IN)  
 
 stocks = parser.DepotParser(os.path.join(main_path,"Data","Stocks",""))
 depot = analyse.Depot(stocks)
@@ -38,7 +37,7 @@ for d in os.listdir(os.path.join(main_path,"Data","Accounts")):
             all_accounts.append(LBB)
             all_account_names.append(x)
 accounts = analyse.Balance(all_accounts, all_account_names, KEYS)   
-print(accounts.changes)
+
 app = gui.QApplication(sys.argv)
 ex = gui.App(depot, accounts,KEYS,3)
 sys.exit(app.exec_())                                

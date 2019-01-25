@@ -21,23 +21,46 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 
 
 
+# use_colors = [
+#      (0.1, 0.2, 0.5),
+#      (0.5, 0.1, 0.5),
+#      (0.5, 0.5, 0.5),
+#      (0.9, 0.9, 0.9),
+#      (0.9, 0.1, 0.1),
+#      (0.1, 0.9, 0.1),
+#      (0.1, 0.1, 0.9),
+#      (0.9, 0.9, 0.1),
+#      (0.9, 0.1, 0.9),
+#      (0.1, 0.9, 0.9),
+#      (0.8, 0.5, 0.2),
+#      (0.7, 0.3, 0.4),
+#      (0.4, 0.3, 0.7),
+#      (0.4, 0.7, 0.3),
+#      (0.1, 0.1, 0.1),
+#      (0.9, 0.5, 0.7)
+# ]
+
 use_colors = [
-     (0.1, 0.2, 0.5),
-     (0.5, 0.1, 0.5),
-     (0.5, 0.5, 0.5),
-     (0.9, 0.9, 0.9),
-     (0.9, 0.1, 0.1),
-     (0.1, 0.9, 0.1),
-     (0.1, 0.1, 0.9),
-     (0.9, 0.9, 0.1),
-     (0.9, 0.1, 0.9),
-     (0.1, 0.9, 0.9),
-     (0.8, 0.5, 0.2),
-     (0.7, 0.3, 0.4),
-     (0.4, 0.3, 0.7),
-     (0.4, 0.7, 0.3),
-     (0.1, 0.1, 0.1),
-     (0.9, 0.5, 0.7)
+   (0.561,0.188,0.357),
+   (0.839,0.561,0.686),
+#    (0.702,0.349,0.51),
+   (0.42,0.071,0.231),
+   (0.278,0,0.129),
+   (0.447,0.612,0.204),
+   (0.792,0.918,0.612),
+#    (0.608,0.765,0.384),
+   (0.302,0.459,0.078),
+   (0.18,0.306,0),
+   (0.42,0.184,0.549),
+   (0.702,0.525,0.796),
+#    (0.525,0.306,0.643),
+   (0.322,0.094,0.447),
+   (0.212,0.016,0.318),
+   (0.824,0.824,0.243),
+   (1,1,0.639),
+#    (0.965,0.965,0.431),
+   (0.671,0.671,0.11),
+   (0.475,0.475,0)
 ]
 
 # def formatter(**kwargs):
@@ -277,7 +300,6 @@ class NewPlotCanvas(QMainWindow):
             self.sc.append(self.axes.bar(x, y, 2, color=use_colors[i], bottom=bot, label=labels[i]))
             for bar in self.sc[-1]:
                   self.label_store[bar] = labels[i] 
-            print("BOT", bot)  
             bot = [bot[j] + y[j] for j in range(len(y))]
             self.all_label.append(self.label_store)
 
@@ -324,7 +346,6 @@ class NewPlotCanvas(QMainWindow):
                   self.label_store[bar] = labels[i]   
             self.all_label.append(self.label_store)
 
-        print("DATA", data)
         self.axes.set_xscale('log')    
         self.axes.tick_params(axis='y',  which='both', left=False, right=False, labelleft=False)
 
@@ -338,9 +359,10 @@ class NewPlotCanvas(QMainWindow):
 
     def update_annot(self,bar,label):
         x = bar.get_x()+bar.get_width()/2.
-        y = bar.get_y()+bar.get_height()
+        y = bar.get_y()+bar.get_height()/2
+        y_val = bar.get_height()
         self.annot.xy = (x,y)
-        text = label+"\n (" + str(y) + " Eur)" #"#self.label_store[bar]
+        text = label+"\n" + "({:.2f}Eur)".format(y_val) #"#self.label_store[bar]
         self.annot.set_text(text)
         self.annot.get_bbox_patch().set_alpha(0.4)        
 

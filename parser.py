@@ -77,14 +77,26 @@ class LBB_Parser(Parser):
 class CA_Parser(Parser):
     def parse(self,file):
         data=[]
+        start_writing = False
         with open(file, newline='', encoding = "ISO-8859-1") as csvfile:
             spamreader = csv.reader(csvfile, delimiter=';', quotechar='"')
             for row in spamreader:
-                    data.append(self.format_entry(row))
+                    if (start_writing):
+                        if len(row)>1:
+                            data.append(self.format_entry(row))
+                    elif len(row)>0:
+                        if (row[0]=='Date'):
+                            start_writing=True  
         return data
 
+    def format_date(self, in_string):
+        return  datetime.datetime.strptime(in_string, "%d/%m/%Y").date()
+
     def format_entry(self,text):
-        out=[self.format_date(text[0]),text[1],self.format_number(text[-1])]
+        try:
+            out=[self.format_date(text[0]),text[1],self.format_number(text[3])]
+        except:
+            out=[self.format_date(text[0]),text[1],-self.format_number(text[2])]            
         return out
 
 class PayPal_Parser(Parser):     
@@ -136,11 +148,15 @@ class DepotParser(Parser):
                     if row[0] == "Aktien" or row[0] == "Fonds":
                         if row[1] not in self.ISIN:
                             self.ISIN[row[1]] = row[2]
-                        out.append([self.ISIN[row[1]], int(row[3]), self.format_number(row[5]), self.format_number(row[10])])
-                        if row[0] == "Aktien":
-                            stocks.append(self.ISIN[row[1]])
-                        else:
-                            fonds.append(self.ISIN[row[1]])
+                        try:
+                            out.append([self.ISIN[row[1]], int(row[3]), self.format_number(row[5]), self.format_number(row[10])])
+                            if row[0] == "Aktien":
+                                stocks.append(self.ISIN[row[1]])
+                            else:
+                                fonds.append(self.ISIN[row[1]])
+                        except:
+                            print("corrupted file: ", file)
+
         return out, stocks, fonds
 
 class Keywords():
@@ -150,4 +166,8 @@ class Keywords():
         self.IN = d['Einkommen']
         self.OUT = d['Ausgaben']
         self.INTERNAL = d['Internal']
-        self.is_included = list(self.IN.keys()) + list(self.OUT.keys())
+        self.is_included = []
+        for k in list(list(self.IN.keys()) + list(self.OUT.keys())):
+            if k[-2:] != "**":
+                self.is_included.append(k) 
+

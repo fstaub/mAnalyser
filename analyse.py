@@ -12,6 +12,7 @@ class Balance():
         self.OUT, self.missing_out = self.categorise_money_transfers(self.outgoing_raw,keywords.OUT)        
 
         self.names = names
+        self.is_included = names
         self.get_changes_accounts(accounts)
 
     def collect(self,accounts,names):
@@ -19,16 +20,22 @@ class Balance():
         self.outgoing_raw = []   
         self.inout_account = defaultdict(lambda: 0)
         self.start = defaultdict(lambda: 0)
+        self.internal = []
+        self.internal_account = {}
 
         for a,n in zip(accounts,names):
             self.inout_account[n] = []
             self.start[n] = a.start
+            self.internal += a.internal_transfers
+            self.internal_account[n] = a.internal_transfers
             for e in a.all_information:
                 self.inout_account[n].append(e)                
                 if e[2]>0:
                     self.incoming_raw.append(e)
                 else:
                     self.outgoing_raw.append(e)
+
+        # print("start", self.start)
 
     def get_changes_accounts(self,accounts):
         self.changes= defaultdict(lambda: 0) 
@@ -37,15 +44,15 @@ class Balance():
         for x,y in zip(self.names, accounts):
             # self.changes[x] = self.account_evolution_month(y.internal_transfers[x]+self.inout_account[x])
             self.transfers[x] = self.inout_account[x]+y.internal_transfers
-            self.changes[x] = self.account_evolution_month(self.inout_account[x]+y.internal_transfers)
+            self.changes[x] = self.account_evolution_month(self.inout_account[x] + y.internal_transfers, x)
 
-    def account_evolution_month(self,account):
+    def account_evolution_month(self, account, name):
         dates = find_dates_list(account)
         # out = defaultdict(lambda: 0) # {}
         out = []
         remaining = account
         todo = []
-        summed = 0        
+        summed = self.start[name]       
         for d in dates:
             for k in remaining:
                 # if (datetime.datetime.strptime(k[0][3:], "%m.%Y").date() <= datetime.datetime.strptime(d, "%m.%Y").date()):
@@ -142,6 +149,28 @@ def group_data_by_month(in_data, dates):
         out[d] = new_main
     return out   
 
+def last_of_month(data, dates):
+    out = OrderedDict()
+    last_date_in = datetime.date(1999,1,1)
+    for d in dates:
+        new_main = {}
+        for key in data.keys():
+            new_list = []
+            last_value = 0
+            last_date = last_date_in
+            for entry in data[key]:
+                if last_date <= entry[0] <= d:
+                    last_value = entry[2]
+                    last_date = entry[0]
+                    new_list.append(entry)
+            new_main[key] = {}
+            new_main[key]['entries'] =  new_list
+            new_main[key]['sum'] =  last_value 
+        last_date_in = d
+        out[d] = new_main
+    return out  
+    
+
 def average_months(in_data,first,last):
     dates = generate_dates(first,last)
     data = group_data_by_month(in_data,dates)
@@ -152,12 +181,25 @@ def average_months(in_data,first,last):
         for  k in i.keys():
             if k in new_list:
                 new_list[k]['sum'] += i[k]['sum']/ld
-                new_list[k]['entries'].append(i[k]['entries'])
+                new_list[k]['entries'] += i[k]['entries']
             else:
                 new_list[k]={}
                 new_list[k]['sum'] = i[k]['sum']/ld
                 new_list[k]['entries']= i[k]['entries']
-    return new_list    
+    return new_list   
+
+def depot_value(in_data):
+    new_list = OrderedDict()
+    for d in in_data.keys():
+        sum = 0
+        entries = []
+        for k in in_data[d].keys():
+            sum += in_data[d][k]['sum']
+            entries.append([d, k, in_data[d][k]['sum']])
+        new_list[get_month(d)] = {}
+        new_list[get_month(d)]['sum'] = sum 
+        new_list[get_month(d)]['entries'] = entries
+    return new_list
 
 def add_months(sourcedate,months):
      month = sourcedate.month - 1 + months
@@ -166,14 +208,15 @@ def add_months(sourcedate,months):
      day = min(sourcedate.day,calendar.monthrange(year,month)[1])
      return datetime.date(year,month,day)
 
+def go_to_last_day(date):
+    days = calendar.monthrange(date.year,date.month)[1]
+    return datetime.date(date.year, date.month, days)     
+
 def generate_dates(first,last):
-    out = [first]
-    # start = datetime.datetime.strptime(first, "%m.%Y").date()
-    # end = datetime.datetime.strptime(last, "%m.%Y").date()
+    out = [go_to_last_day(first)]
     next_month = add_months(first,1)
     while (next_month <= last):
-        # out.append(next_month.strftime("%m.%Y"))
-        out.append(next_month)        
+        out.append(go_to_last_day(next_month))     
         next_month = add_months(next_month,1)
     return out    
 
@@ -224,26 +267,8 @@ class Depot():
         self.changes_depot(stocks)
         self.stocks = stocks.stocks 
         self.fonds = stocks.fonds
-        
-#     def changes_depot(self, stocks):    
-# #        dates = sorted(list(stocks.all_information.keys()), key=lambda x: datetime.datetime.strptime(x, "%d.%m.%Y").date())
-#         dates = sorted(list(stocks.all_information.keys()))
-#         last_win_stocks = 0
-#         last_win_fonds = 0
-#         self.all_information = []
-#         for d in dates:
-#             win_stocks = 0
-#             win_fonds = 0
-#             if len(stocks.all_information[d]) > 0:
-#                 for x in stocks.all_information[d]:
-#                     if x[0] in stocks.stocks:
-#                         win_stocks  += x[1]*(x[3]-x[2])
-#                     else:
-#                         win_fonds += x[1]*(x[3]-x[2])
-#                 self.all_information.append([d,'Fonds',win_fonds-last_win_fonds])
-#                 self.all_information.append([d,'Aktien',win_stocks-last_win_stocks])
-#                 last_win_fonds = win_fonds
-#                 last_win_stocks = win_stocks 
+        self.is_included = self.fonds + self.stocks
+
     def changes_depot(self, stocks):    
 #        dates = sorted(list(stocks.all_information.keys()), key=lambda x: datetime.datetime.strptime(x, "%d.%m.%Y").date())
         dates = sorted(list(stocks.all_information.keys()))
@@ -252,16 +277,28 @@ class Depot():
         self.all_information = []
         self.current_values = {}
         self.initial_values = {}
+        self.current_values_total = []
+        self.current_changes_total = []
+        
         for d in dates:
+            sum_total = 0
+            last_win_total = 0
             if len(stocks.all_information[d]) > 0:
                 for x in stocks.all_information[d]:
                     win  = x[1]*(x[3]-x[2])
                     self.all_information.append([d,x[0],win-last_win[x[0]]])
+                    last_win_total += win-last_win[x[0]]
                     last_win[x[0]] = win
                     if x[0] not in  self.initial_values:
                         self.initial_values[x[0]] = x[1]*x[2]
                         self.current_values[x[0]] = []
-                    self.current_values[x[0]].append([d, x[1], self.initial_values[x[0]] + last_win[x[0]]])
+                    sum_total += x[1]*x[3]
+                    self.current_values[x[0]].append([d, x[1], x[1]*x[3]])
+                    if x[0] == 'Alphabet-A Rg':
+                        print([d, x[1], self.initial_values[x[0]] + last_win[x[0]]])
+            if sum_total > 0:
+                self.current_values_total.append([d,'daily sum', sum_total])
+                self.current_changes_total.append([d,'daily change', last_win_total])
                      
     
 
@@ -278,24 +315,25 @@ def prepare_stacked_bar(in_data, keywords, start, end):
         arranged = arrange_sum_by_data_datetime(sum_all,dates)
         data = [[abs(x) for x in y] for y in arranged]
 
-        return data, list(keywords.keys())
+        return data, list(keywords.keys()), dates
 
 def prepare_stacked_bar_accounts(in_data, keywords, start, end):
-        labels = list(in_data.keys())
+        # labels = list(in_data.keys())
+        # labels = [l for l in labels if l in keywords]
+        labels = keywords
         vals = list(in_data.values())
         dates = generate_dates(start, end)
         final_val =[]
         for d in dates:
             per_month=[]
-            last=0
-            for l in vals:
-                for b in l:
+            for l in labels:
+                last=0                
+                for b in in_data[l]:
                     if b[0] <= d:
                         last = b[2]
                 per_month.append(last)
             final_val.append(per_month)
-            
-        return final_val, labels  
+        return final_val, labels, dates  
 
 def prepare_pie_chart(in_data, keywords, start, end):
     sum_all = summary_months(in_data,list(keywords.keys()))
@@ -325,25 +363,28 @@ def prepare_plusminus_bar(in_data, keywords, start, end):
     out = []
     for x in data.keys():
         out += [sum(x['sum'] for x in list(data[x].values()))]
-    return out, dates  
+    return out, dates
 
-def prepare_scatter_total_change_stocks(in_data, keywords, start, end):
-    x, values = generate_total_change(in_data, keywords)
-    return values, x
+def prepare_scatter_total_change_stocks(in_data, in_data_total, keywords, start, end, relative):
+    dates, values = generate_total_change(in_data, keywords)
+    if (relative):
+        values = [v/vt[2] for v,vt in zip(values,in_data_total)]
+    
+    return values, dates
 
 def prepare_pie_total_stocks(in_data, keywords, start, end):
-    x, values = prepare_stacked_bar_accounts(in_data, keywords, start, end)
-    print(values)
-    val = [v[-1] for v in x]
-    return val, x    
+    x, labels, dates = prepare_stacked_bar_accounts(in_data, keywords, start, end)
+    return x[-1], labels    
 
-def prepare_scatter_daily_changes_stocks(in_data, keywords, start, end):
-    x, values = generate_daily_changes(in_data, keywords)
-    return values, x    
+def prepare_scatter_daily_changes_stocks(in_data, in_data_total, keywords, start, end, relative ):
+    dates, values = generate_daily_changes(in_data, keywords)
+    if (relative):
+        values = [v/vt[2] for v,vt in zip(values,in_data_total)]  
+    return values, dates    
 
 def prepare_scatter_daily_stocks(in_data, keywords, start, end):
-    x, values = generate_daily_changes(in_data, keywords)
-    return values, x        
+    dates, values = generate_daily_changes(in_data, keywords)
+    return values, dates        
 
 def generate_daily_changes(info, keywords):
         dates = []

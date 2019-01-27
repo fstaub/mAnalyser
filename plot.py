@@ -15,30 +15,12 @@ from PyQt5.QtGui import QIcon, QStandardItemModel
 from PyQt5.QtCore import Qt
 
 import matplotlib.pyplot as plt
+import matplotlib
+import matplotlib.dates as mdates
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
-
-
-# use_colors = [
-#      (0.1, 0.2, 0.5),
-#      (0.5, 0.1, 0.5),
-#      (0.5, 0.5, 0.5),
-#      (0.9, 0.9, 0.9),
-#      (0.9, 0.1, 0.1),
-#      (0.1, 0.9, 0.1),
-#      (0.1, 0.1, 0.9),
-#      (0.9, 0.9, 0.1),
-#      (0.9, 0.1, 0.9),
-#      (0.1, 0.9, 0.9),
-#      (0.8, 0.5, 0.2),
-#      (0.7, 0.3, 0.4),
-#      (0.4, 0.3, 0.7),
-#      (0.4, 0.7, 0.3),
-#      (0.1, 0.1, 0.1),
-#      (0.9, 0.5, 0.7)
-# ]
 
 use_colors = [
    (0.561,0.188,0.357),
@@ -71,82 +53,109 @@ use_colors = [
    (0.475,0.475,0)
 ]
 
+bg_color = (0.3, 0.3, 0.3)
+bbg_color = (0.1, 0.1, 0.1)
+fg_color = (0.9, 0.9, 0.9)
+title_color = (0.7, 0.7, 0.7)
+
+
 class NewPlotCanvas(QMainWindow):
-    def __init__(self, style, in_arg=[], parent=None, width=5, height=4):
-    #  def __init__(self, parent=None):
+    def __init__(self, style, in_arg=[], parent=None, width=2, height=4):
         QMainWindow.__init__(self, parent)
-        #self.x, self.y = self.get_data()
         self.create_main_frame(style, width, height)
 
         if (style == "StackedBar"):
-            self.on_draw_StackedBar(in_arg[0],in_arg[1], width, height)
+            self.on_draw_StackedBar(in_arg[0], in_arg[1], in_arg[2], in_arg[3])
+        if (style == "StackedBarLog"):
+            self.on_draw_StackedBar(in_arg[0], in_arg[1], in_arg[2], in_arg[3], log=True)            
         if (style == "LogLinear"):
-            self.on_draw_LogLinear(in_arg[0],in_arg[1], width, height)            
+            self.on_draw_LogLinear(in_arg[0], in_arg[1], in_arg[2], in_arg[3])            
         if (style == "PieChart"):
-            print("Pie", in_arg[0])
-            self.on_draw_PieChart(in_arg[0],in_arg[1], width, height)            
+            self.on_draw_PieChart(in_arg[0], in_arg[1], in_arg[2])            
         if (style == "HorizontalBar"):
-            self.on_draw_HorizontalBar(in_arg[0],in_arg[1], width, height) 
+            self.on_draw_HorizontalBar(in_arg[0], in_arg[1], in_arg[2]) 
         if (style == "PlusMinusBar"):
-            self.on_draw_PlusMinusBar(in_arg[0],in_arg[1], width, height)                                  
+            self.on_draw_PlusMinusBar(in_arg[0], in_arg[1], in_arg[2])                                  
         if (style == "HorizontalBarLog"):
-            self.on_draw_HorizontalBar(in_arg[0],in_arg[1], width, height, log=True)  
+            self.on_draw_HorizontalBar(in_arg[0], in_arg[1], in_arg[2], log=True)  
         if (style == "ScatterPlot"):
-            self.on_draw_ScatterDatePlot(in_arg[0],in_arg[1], width, height, bar=False)
+            self.on_draw_ScatterDatePlot(in_arg[0], in_arg[1], in_arg[2],bar=False)
         if (style == "ScatterPlotBar"):
-            self.on_draw_ScatterDatePlot(in_arg[0],in_arg[1], width, height, bar=True)
+            self.on_draw_ScatterDatePlot(in_arg[0], in_arg[1], in_arg[2],bar=True)
 
                   
-
-                                     
-
     def create_main_frame(self, style, w, h):
         self.main_frame = QWidget()
 
-        self.fig = Figure((w,h ), dpi=100)
+        if (style == "PieChart"):
+            self.fig = Figure(figsize=(w, h), tight_layout=True, dpi=100, facecolor=bg_color, edgecolor=bg_color)
+        else: 
+            self.fig = Figure(figsize=(w, h), tight_layout=True, dpi=100, facecolor=bbg_color, edgecolor=bg_color)
         self.canvas = FigureCanvas(self.fig)
         self.canvas.setParent(self.main_frame)
         self.canvas.setFocusPolicy( Qt.ClickFocus )
         self.canvas.setFocus()
+        # self.canvas.setWidth(w)
+        self.canvas.updateGeometry()
 
         if (style == "StackedBar"):
-            self.canvas.mpl_connect("motion_notify_event", self.hover)
+            self.canvas.mpl_connect("motion_notify_event", self.hover_bar)
+        if (style == "StackedBarLog"):
+            self.canvas.mpl_connect("motion_notify_event", self.hover_bar)            
         if (style == "HorizontalBar"):
-            self.canvas.mpl_connect("motion_notify_event", self.hover) 
-        # if (style == "HorizontalBar"):
-        #     self.on_draw_HorizontalBar(in_arg[0],in_arg[1], width, height)                       
+            self.canvas.mpl_connect("motion_notify_event", self.hover_bar) 
 
         vbox = QVBoxLayout()
         vbox.addWidget(self.canvas)         # the matplotlib canvas
         self.main_frame.setLayout(vbox)
         self.setCentralWidget(self.main_frame)
 
-    def on_draw_StackedBar(self, data, labels, width, height):
-        x = 3*np.arange(len(data))
+    def on_draw_StackedBar(self, data, labels, dates, ptitle, log=False):
         bot = [0 for x in data]
-
         self.fig.clear()
         self.axes = self.fig.add_subplot(111)
         self.sc = []
         self.all_label = []
+        dimw = 25
+        if (log is True):
+            dimw = dimw/len(labels)
         for i in range(len(labels)):
             self.label_store={}
             y = [d[i] for d in data]
-            self.sc.append(self.axes.bar(x, y, 2, color=use_colors[i], bottom=bot, label=labels[i]))
+            if (log is True):
+                new_dates = [d +datetime.timedelta(days=2*(int(len(labels)/2)+i)) for d in dates]
+            else:
+                new_dates = dates
+            self.sc.append(self.axes.bar(new_dates , y, dimw, color=use_colors[i], bottom=bot, label=labels[i], alpha=0.75))
             for bar in self.sc[-1]:
                   self.label_store[bar] = labels[i] 
-            bot = [bot[j] + y[j] for j in range(len(y))]
+            if log is False:
+                bot = [bot[j] + y[j] for j in range(len(y))]
             self.all_label.append(self.label_store)
 
-        self.annot = self.axes.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
+        if (log is True):
+            self.axes.set_yscale('log')
+
+        self.axes.set_title(ptitle, color=title_color)
+
+        self.axes.set_facecolor(bg_color)
+        self.axes.xaxis.set_tick_params(color=fg_color, labelcolor=fg_color)
+        self.axes.yaxis.set_tick_params(color=fg_color, labelcolor=fg_color)
+        for spine in self.axes.spines.values():
+            spine.set_color(fg_color)       
+        self.axes.grid(color='gray', linestyle='-', linewidth=0.2)                 
+
+        self.axes.xaxis.set_major_formatter(mdates.DateFormatter('%m/%Y'))  
+        self.axes.xaxis.set_major_locator(mdates.MonthLocator()) 
+        self.fig.autofmt_xdate()
+
+        self.annot = self.axes.annotate("", xy=(0,0), xytext=(20,20), textcoords="offset points",
                             bbox=dict(fc="w"),
                             arrowprops=dict(arrowstyle="->"))
         self.annot.set_visible(False)
-        self.fig.set_size_inches(width, height)
         self.canvas.draw() 
 
-    def on_draw_LogLinear(self, data, labels, width, height):
-        x = 3*np.arange(len(data))
+    def on_draw_LogLinear(self, data, labels,ptitle, dates):
         bot = [0 for x in data]
 
         self.fig.clear()
@@ -156,44 +165,65 @@ class NewPlotCanvas(QMainWindow):
         for i in range(len(labels)):
             self.label_store={}
             y = [d[i] for d in data]
-            self.sc.append(self.axes.plot(x, y, color=use_colors[i], label=labels[i]))
-            # for bar in self.sc[-1]:
-            #       self.label_store[bar] = labels[i] 
-            # bot = [bot[j] + y[j] for j in range(len(y))]
-            # self.all_label.append(self.label_store)
+            self.sc.append(self.axes.plot(dates, y, color=use_colors[i], label=labels[i]))
 
         # self.annot = self.axes.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
         #                     bbox=dict(fc="w"),
         #                     arrowprops=dict(arrowstyle="->"))
         # self.annot.set_visible(False)
+
+        self.axes.set_facecolor(bg_color)
+        self.axes.xaxis.set_tick_params(color=fg_color, labelcolor=fg_color)
+        self.axes.yaxis.set_tick_params(color=fg_color, labelcolor=fg_color)
+        for spine in self.axes.spines.values():
+            spine.set_color(fg_color)       
+        self.axes.grid(color='gray', linestyle='-', linewidth=0.2)        
+
+        self.axes.xaxis.set_major_formatter(mdates.DateFormatter('%m/%Y'))  
+        self.axes.xaxis.set_major_locator(mdates.MonthLocator()) 
+        self.fig.autofmt_xdate()
+
         self.axes.set_yscale('log') 
-        self.fig.set_size_inches(width, height)        
+        self.axes.set_title(ptitle, color=title_color)
         self.canvas.draw()                 
 
-    def on_draw_PieChart(self,data, labels, width, height):
+    def on_draw_PieChart(self,data, labels, ptitle):
         self.fig.clear()
         self.axes = self.fig.add_subplot(111)
-        self.axes.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        # self.axes.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
 
 
         def func(pct, allvals):
             absolute = int(pct/100.*np.sum(allvals))
-            if pct > 2:
+            if pct > 5:
                 return "{:.1f}%".format(pct)
             else:
                 return ""
 
         wedges, texts, autotexts = self.axes.pie(data, autopct=lambda pct: func(pct, data),
                                     textprops=dict(color="w"), colors=use_colors)
-        # target.set_size_inches(w,h)                                  
-        self.annot = self.axes.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
-                            bbox=dict(fc="w"),
-                            arrowprops=dict(arrowstyle="->"))
-        self.annot.set_visible(False)
-        self.fig.set_size_inches(width, height)        
+        
+        bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
+        kw = dict(xycoords='data', textcoords='data', arrowprops=dict(arrowstyle="-"),
+                  bbox=bbox_props, zorder=0, va="center")
+        for i, p in enumerate(wedges):
+            ang = (p.theta2 - p.theta1)/2. + p.theta1
+            y = np.sin(np.deg2rad(ang))
+            x = np.cos(np.deg2rad(ang))
+            horizontalalignment = {-1: "right", 1: "left"}[int(np.sign(x))]
+            connectionstyle = "angle,angleA=0,angleB={}".format(ang)
+            kw["arrowprops"].update({"connectionstyle": connectionstyle, "color": fg_color})
+            if 0.001 < (data[i]/np.sum(data)):
+                if (data[i]/np.sum(data)) < 0.05:
+                    this_label = str(labels[i])[:min([15,len(labels[i])])]+" "+"{:.1f}%".format(100*data[i]/np.sum(data))
+                elif (data[i]/np.sum(data)) >= 0.05:
+                    this_label = (labels[i])[:min([15,len(labels[i])])]
+                self.axes.annotate(this_label, xy=(x, y), xytext=(1.35*np.sign(x), 1.4*y),
+                     horizontalalignment=horizontalalignment, **kw)
+        self.axes.set_title(ptitle, color=title_color)
         self.canvas.draw()  
 
-    def on_draw_HorizontalBar(self, data, labels, width, height, log=False): 
+    def on_draw_HorizontalBar(self, data, labels, ptitle, log=False): 
         self.fig.clear()
         self.axes = self.fig.add_subplot(111)        
 
@@ -212,30 +242,47 @@ class NewPlotCanvas(QMainWindow):
             self.axes.set_xscale('log')    
         self.axes.tick_params(axis='y',  which='both', left=False, right=False, labelleft=False)
 
+        self.axes.set_facecolor(bg_color)
+        self.axes.xaxis.set_tick_params(color=fg_color, labelcolor=fg_color)
+        self.axes.yaxis.set_tick_params(color=fg_color, labelcolor=fg_color)
+        for spine in self.axes.spines.values():
+            spine.set_color(fg_color)       
+        self.axes.grid(color='gray', linestyle='-', linewidth=0.2)        
+
         for i,k in enumerate(labels):
             self.axes.text(3.5, x[i]-0.2, str(k)+" ("+str(int(data[i]))+" Eur)",size=10)
         self.annot = self.axes.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
                             bbox=dict(fc="w"),
                             arrowprops=dict(arrowstyle="->"))
         self.annot.set_visible(False)      
-        self.fig.set_size_inches(width, height)              
+        self.axes.set_title(ptitle, color=title_color)
         self.canvas.draw()          
 
-    def on_draw_PlusMinusBar(self, data, dates,  width, height):
+    def on_draw_PlusMinusBar(self, data, dates, ptitle):
         self.fig.clear()
         self.axes = self.fig.add_subplot(111)   
 
         x = 3*np.arange(len(data))
-        b = self.axes.bar(x, data, 2, color=['green' if i>0 else 'red' for i in data])
+        b = self.axes.bar(dates, data, 20, color=['green' if i>0 else 'red' for i in data])
 
-        self.axes.set_xticks(x + 1, dates)    
-        # self.axes.set_ylabel('Euro')
+        self.axes.set_facecolor(bg_color)
+        self.axes.xaxis.set_tick_params(color=fg_color, labelcolor=fg_color)
+        self.axes.yaxis.set_tick_params(color=fg_color, labelcolor=fg_color)
+        for spine in self.axes.spines.values():
+            spine.set_color(fg_color)       
+        self.axes.grid(color='gray', linestyle='-', linewidth=0.2)
+
+
+        self.axes.xaxis.set_major_formatter(mdates.DateFormatter('%m/%Y'))  
+        self.axes.xaxis.set_major_locator(mdates.MonthLocator()) 
+        self.fig.autofmt_xdate()
+
+        self.axes.set_title(ptitle, color=title_color)
 
         # self.axes.xticks(x,[d.replace(".20","/") for d in dates])
-        self.fig.set_size_inches(width, height)
         self.canvas.draw()                     
 
-    def on_draw_ScatterDatePlot(self, data, dates, width, height, bar = False):
+    def on_draw_ScatterDatePlot(self, data, dates, ptitle, bar = False):
         self.fig.clear()
         self.axes = self.fig.add_subplot(111)  
         self.fig.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%Y'))
@@ -245,12 +292,21 @@ class NewPlotCanvas(QMainWindow):
         else:
             self.axes.scatter(dates, data, s=3,c=['green' if i>0 else 'red' for i in data])
         self.axes.grid(color='gray', linestyle='-', linewidth=0.2)
-        # self.axes.gcf().autofmt_xdate()    
 
-        self.fig.set_size_inches(width, height)
+        self.axes.set_facecolor(bg_color)
+        self.axes.xaxis.set_tick_params(color=fg_color, labelcolor=fg_color)
+        self.axes.yaxis.set_tick_params(color=fg_color, labelcolor=fg_color)
+        for spine in self.axes.spines.values():
+            spine.set_color(fg_color)       
+        self.axes.grid(color='gray', linestyle='-', linewidth=0.2)        
+
+        self.axes.xaxis.set_major_formatter(mdates.DateFormatter('%m/%Y'))  
+        self.axes.xaxis.set_major_locator(mdates.MonthLocator()) 
+        self.fig.autofmt_xdate()
+        self.axes.set_title(ptitle, color=title_color)
         self.canvas.draw()                     
 
-    def update_annot(self,bar,label):
+    def update_annot_bar(self,bar,label):
         x = bar.get_x()+bar.get_width()/2.
         y = bar.get_y()+bar.get_height()/2
         y_val = bar.get_height()
@@ -260,14 +316,14 @@ class NewPlotCanvas(QMainWindow):
         self.annot.get_bbox_patch().set_alpha(0.4)        
 
 
-    def hover(self,event):
+    def hover_bar(self,event):
         vis = self.annot.get_visible()
         if event.inaxes == self.axes:
             for s, l in zip(self.sc, self.all_label):  
                 for bar in s:  
                     cont, ind = bar.contains(event)
                     if cont:
-                        self.update_annot(bar, l[bar])
+                        self.update_annot_bar(bar, l[bar])
                         self.annot.set_visible(True)
                         self.fig.canvas.draw_idle()
                 else:

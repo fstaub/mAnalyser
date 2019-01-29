@@ -135,9 +135,12 @@ class NewPlotCanvas(QMainWindow):
 
         if (log is True):
             self.axes.set_yscale('log')
+
         self.max_x = (dates[-1]-datetime.date(1,1,1)).days
         self.min_x = (dates[0]-datetime.date(1,1,1)).days
         self.axes.set_title(ptitle, color=title_color)
+
+        self.axes.locator_params(tight=True, nbins=4)        
 
         self.axes.set_facecolor(bg_color)
         self.axes.xaxis.set_tick_params(color=fg_color, labelcolor=fg_color)
@@ -147,7 +150,7 @@ class NewPlotCanvas(QMainWindow):
         self.axes.grid(color='gray', linestyle='-', linewidth=0.2)                 
 
         self.axes.xaxis.set_major_formatter(mdates.DateFormatter('%m/%Y'))  
-        self.axes.xaxis.set_major_locator(mdates.MonthLocator()) 
+        self.axes.xaxis.set_major_locator(mdates.MonthLocator(interval= 1 + int(len(dates)/18) )) 
         self.fig.autofmt_xdate()
 
         self.x_values_text = 20
@@ -298,7 +301,7 @@ class NewPlotCanvas(QMainWindow):
 
 
         self.axes.xaxis.set_major_formatter(mdates.DateFormatter('%m/%Y'))  
-        self.axes.xaxis.set_major_locator(mdates.MonthLocator()) 
+        self.axes.xaxis.set_major_locator(mdates.MonthLocator(interval= 1 + int(len(dates)/18) )) 
         self.fig.autofmt_xdate()
 
         self.axes.set_title(ptitle, color=title_color)

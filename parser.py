@@ -30,7 +30,8 @@ class Parser():
         listOfFile = os.listdir(dirName)
         for file in listOfFile:
             out = out + (self.parse(dirName+file))
-        self.all_information, self.internal_transfers, self.start = self.filter_redundant(out)
+        # self.all_information, self.internal_transfers, self.start = self.filter_redundant(out)
+        self.all_information = out
 
 
 class DiBa_Parser(Parser):

@@ -5,20 +5,6 @@ Embedding In Tk
 
 """
 
-# import tkinter as tk
-# import tkinter.ttk as ttk
-
-# from matplotlib.backends.backend_tkagg import (
-#     FigureCanvasTkAgg, NavigationToolbar2Tk)
-# # Implement the default Matplotlib key bindings.
-# from matplotlib.backend_bases import key_press_handler
-# from matplotlib.figure import Figure
-
-
-# import matplotlib.pyplot as plt
-# from matplotlib.figure import Figure
-# from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-# from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 import mplcursors
 from mpldatacursor import datacursor
@@ -185,12 +171,6 @@ class NewPlotWindow(QDialog):
         if (arg4 != []):
             self.PLOT_DOWN_RIGHT = plot.NewPlotCanvas(arg4[0], in_arg=arg4[1:], width=7, height=4)
             layout_down.addWidget(self.PLOT_DOWN_RIGHT)
-
-        # layout = QGridLayout() 
-        # layout.addWidget(self.PLOT_TOP_LEFT,0,0)
-        # layout.addWidget(self.PLOT_TOP_RIGHT,0,1)
-        # layout.addWidget(self.PLOT_DOWN_LEFT,1,0)
-        # layout.addWidget(self.PLOT_DOWN_RIGHT,1,1)
 
         frame_top.setLayout(layout_top)
         frame_down.setLayout(layout_down)
@@ -368,10 +348,8 @@ class InOutTab(OptionsWidget):
             ["Einnahmen","Ausgaben"], self.parent.KEYS)
         self.cw.show()
 
-    def update_data(self, in_data, keywords, start, end):
-        dates = analyse.generate_dates(start, end)
-        use_data = analyse.group_data_by_month(in_data, dates, keywords)
-        use_data['Durchschnitt'] = analyse.average_months(in_data, start, end, keywords)
+    def update_data(self, df, keywords, start, end):
+        use_data = analyse.last_entry_of_month_inout(df, keywords, start, end)
         data_tab = DataTabs(self.parent.data_main_tab, use_data)
 
     def on_pushButton_start(self):
@@ -379,16 +357,13 @@ class InOutTab(OptionsWidget):
 
         if (self.ComboBox.currentText() == "Einnahmen"):
                 all_keys = self.parent.KEYS.IN
-                # all_data = self.parent.DATA.IN
         else:
                 all_keys = self.parent.KEYS.OUT
-                # all_data = self.parent.DATA.OUT
         s_inout = self.ComboBox.currentText()
 
-        # selected_keys =  {key:value for key, value in all_keys.items() if key in self.parent.KEYS.is_included }
         selected_keys = [key for key  in all_keys.keys() if key in self.parent.KEYS.is_included]
-        # arguments = [all_data, selected_keys, self.date_start, self.date_end]
         arguments = [self.parent.DATA.df_transactions, selected_keys, self.date_start, self.date_end]
+
         self.update_data(*arguments)    
 
         if self.radioPlot1.isChecked():
@@ -426,17 +401,8 @@ class AccountTab(OptionsWidget):
     def on_pushButton_start(self):
         self.set_dates()        
 
-        self.update_data(self.parent.DATA.transfers, self.parent.DATA.changes, self.parent.DATA.is_included,
-            self.date_start, self.date_end)               
-
-        # arguments = [self.parent.DATA.changes, self.parent.DATA.is_included,
-        #         self.date_start, self.date_end]
-
         arguments = [self.parent.DATA.df_acc, self.parent.DATA.is_included,
                 self.date_start, self.date_end]
-
-        # arguments_diff = [self.parent.DATA.transfers, self.parent.DATA.is_included,
-        #         self.date_start, self.date_end]
 
         if self.radioPlot1.isChecked():
             style1 = "StackedBar"
@@ -446,6 +412,7 @@ class AccountTab(OptionsWidget):
             style2 = "HorizontalBarLog"                
 
 
+        self.update_data(*arguments)
         self.new_plot_window = NewPlotWindow(
             arg1=[style1, *analyse.prepare_stacked_bar_accounts(*arguments), "Kontostände pro Monat"],
             arg2=["PlusMinusBar",*analyse.prepare_plusminus_bar(*arguments), "Monatliche Veränderungen"], 
@@ -454,16 +421,9 @@ class AccountTab(OptionsWidget):
             title="Plots")
         self.new_plot_window.show()
 
-    def update_data(self, in_data1, in_data2, keywords, start, end):
-        dates = analyse.generate_dates(start, end)
-        use_data1 = analyse.group_data_by_month(in_data1, dates, keywords)
-        use_data2 = analyse.last_of_month(in_data2, dates, keywords)
-        temp = use_data1
-        for k1 in temp.keys():
-            for k2 in temp[k1].keys():
-                use_data1[k1][k2]['sum'] = [use_data1[k1][k2]['sum'], use_data2[k1][k2]['sum']]
-        
-        data_tab = DataTabs(self.parent.data_main_tab, use_data1, rows=4)
+    def update_data(self, df,  keywords, start, end):
+        use_data = analyse.last_entry_of_month_accounts(df, keywords, start, end)
+        data_tab = DataTabs(self.parent.data_main_tab, use_data, rows=4)
 
 
 
@@ -513,35 +473,26 @@ class StockTab(OptionsWidget):
         else:
             relativ = False
 
-        # arguments = [self.parent.DEPOT.all_information,
-        #             self.parent.DEPOT.current_values_total,
-        #              selected_keys,
-        #         self.date_start, self.date_end, relativ]              
 
-        # arguments_total = [self.parent.DEPOT.current_values, selected_keys,
-        #         self.date_start, self.date_end]   
-
-        arguments = [self.parent.DEPOT.df_depot, selected_keys,
+        arguments_relative = [self.parent.DEPOT.df_depot, selected_keys,
                 self.date_start, self.date_end, relativ]             
 
-        arguments_total = [self.parent.DEPOT.df_depot, selected_keys,
+        arguments = [self.parent.DEPOT.df_depot, selected_keys,
                 self.date_start, self.date_end]                
 
-        # self.update_data(*arguments_total)                              
+        self.update_data(*arguments)                              
 
         self.new_plot_window = NewPlotWindow(
-            arg1=["ScatterPlot", *analyse.prepare_scatter_total_change_stocks(*arguments), "Gesamte Veränderung des Depots"],
-            arg2=["ScatterPlotBar", *analyse.prepare_scatter_daily_changes_stocks(*arguments), "Tägliche Veränderung des Depots"],                                     
-            arg3=["StackedBar", *analyse.prepare_stacked_bar_stocks(*arguments_total), "Absolute Zusammensetzung des Depots"], 
-            arg4=["PieChart", *analyse.prepare_pie_total_stocks(*arguments_total), "Prozentuale Zusammensetzung des Depots"],
+            arg1=["ScatterPlot", *analyse.prepare_scatter_total_change_stocks(*arguments_relative), "Gesamte Veränderung des Depots"],
+            arg2=["ScatterPlotBar", *analyse.prepare_scatter_daily_changes_stocks(*arguments_relative), "Tägliche Veränderung des Depots"],                                     
+            arg3=["StackedBar", *analyse.prepare_stacked_bar_stocks(*arguments), "Absolute Zusammensetzung des Depots"], 
+            arg4=["PieChart", *analyse.prepare_pie_total_stocks(*arguments), "Prozentuale Zusammensetzung des Depots"],
             title="Plots")
         self.new_plot_window.show()   
 
-    def update_data(self, in_data, keywords, start, end):
-        dates = analyse.generate_dates(start, end)
-        use_data = analyse.last_of_month(in_data,dates, keywords)
-        use_data['Depotwert'] = analyse.depot_value(use_data)
-        data_tab = DataTabs(self.parent.data_main_tab, use_data)          
+    def update_data(self, df, keywords, start, end):
+        use_data = analyse.last_entry_of_month_stocks(df, keywords, start, end)
+        data_tab = DataTabs(self.parent.data_main_tab, use_data, rows=4)          
 
 
 class App(QDialog):
@@ -562,8 +513,7 @@ class App(QDialog):
         self.used_date_start = ""
         self.used_date_end = ""
         self.used_type = ""
-        # self.all_dates = sorted(analyse.find_dates(analyse.summary_months(self.DATA.IN,list(self.KEYS.IN.keys()))),
-        #     key =  lambda x: datetime.datetime.strptime(x,"%m/%Y"))
+
         df = self.DATA.df_transactions
         self.all_dates = sorted(analyse.generate_dates(
                     min(df[df['Date'] > datetime.date(2000,1,1)]['Date']), max(df['Date'])
@@ -634,7 +584,6 @@ class DataTabs():
     def __init__(self, tab, tabs, rows=3):
         self.tab = tab
         self.tab.clear()  
-
         self.generate_tab_content(tabs,rows=rows)
 
     def generate_tab_content(self, tabs,rows=3):
@@ -665,6 +614,7 @@ class DataTabs():
                             count += 1
                             table.setRowCount(count+1)
                     else:
+                        print(t,d)
                         if (abs(tabs[t][d]['sum'][0])) > 0:
                             table.setItem(count,0,QTableWidgetItem(d))
                             count_s = 1
@@ -696,10 +646,6 @@ class DataTabs():
 
     def make_show_details(self,to_show,title):
         def show_details():
-            # if date =="all":
-            #     to_show = entries
-            # else:
-            #     to_show = [d for d in entries if (d[0][3:] == date)]                
             self.dw = Detail_Window(to_show,title)
             self.dw.show()
         return show_details 

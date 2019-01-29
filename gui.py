@@ -233,11 +233,11 @@ class ConfigWindow(QDialog):
 
         buttons = QGroupBox("")
         button_layout = QHBoxLayout()        
-        self.button_ok=QPushButton('OK')
+        self.button_ok=QPushButton('Speichern')
         self.button_ok.clicked.connect(self.on_pushButton_ok)
         button_layout.addWidget(self.button_ok)
 
-        self.button_cancel=QPushButton('Cancel')
+        self.button_cancel=QPushButton('Schließen')
         self.button_cancel.clicked.connect(self.on_pushButton_cancel)
         button_layout.addWidget(self.button_cancel)
         buttons.setLayout(button_layout)
@@ -252,7 +252,7 @@ class ConfigWindow(QDialog):
             if i.isChecked() is True:
                 self.is_selected.append(n)
         self.ref.is_included = self.is_selected
-        self.close()
+        # self.close()
 
     def on_pushButton_cancel(self):
         self.close()
@@ -311,6 +311,12 @@ class OptionsWidget(QWidget):
         pushButton.clicked.connect(self.on_pushButton_config)
         self.layout.addWidget(QColumn(QLabel("Kategorien"), pushButton))
 
+    def add_radio_log(self):	
+        self.radioPlot1 = QRadioButton("Linear")	 
+        self.radioPlot2 = QRadioButton("Log")	 
+        self.radioPlot1.setChecked(True) 	   
+        self.layout.addWidget(QColumn(self.radioPlot1, self.radioPlot2 ))        
+
     def on_pushButton_start(self):
         pass
 
@@ -330,7 +336,7 @@ class InOutTab(OptionsWidget):
         self.add_categories()
         self.add_time_period()
         self.add_configure()
-        self.add_radio()
+        self.add_radio_log()
         self.add_button_data()
         self.add_start_button()
 
@@ -348,19 +354,14 @@ class InOutTab(OptionsWidget):
         self.layout.addWidget(self.pushButton)  
 
     def on_pushButton_data(self):
-        self.data_window = Data_Window([self.parent.DATA.IN, self.parent.DATA.OUT, 
-            {'Not Categorised (Einkommen)': self.parent.DATA.missing_in,
-            'Not Categorised (Ausgaben)': self.parent.DATA.missing_out,
-            'Internal': self.parent.DATA.internal}],
-            "Input Data")
-        self.data_window.show()         
+        pass
+        # self.data_window = Data_Window([self.parent.DATA.IN, self.parent.DATA.OUT, 
+        #     {'Not Categorised (Einkommen)': self.parent.DATA.missing_in,
+        #     'Not Categorised (Ausgaben)': self.parent.DATA.missing_out,
+        #     'Internal': self.parent.DATA.internal}],
+        #     "Input Data")
+        # self.data_window.show()         
 
-
-    def add_radio(self):	
-        self.radioPlot1 = QRadioButton("Linear")	 
-        self.radioPlot2 = QRadioButton("Log")	 
-        self.radioPlot1.setChecked(True) 	   
-        self.layout.addWidget(QColumn(self.radioPlot1, self.radioPlot2 ))
 
     def on_pushButton_config(self):
         self.cw = ConfigWindow(self, [self.parent.KEYS.IN, self.parent.KEYS.OUT], 
@@ -369,8 +370,8 @@ class InOutTab(OptionsWidget):
 
     def update_data(self, in_data, keywords, start, end):
         dates = analyse.generate_dates(start, end)
-        use_data = analyse.group_data_by_month(in_data, dates)
-        use_data['Durchschnitt'] = analyse.average_months(in_data, start, end)
+        use_data = analyse.group_data_by_month(in_data, dates, keywords)
+        use_data['Durchschnitt'] = analyse.average_months(in_data, start, end, keywords)
         data_tab = DataTabs(self.parent.data_main_tab, use_data)
 
     def on_pushButton_start(self):
@@ -378,15 +379,16 @@ class InOutTab(OptionsWidget):
 
         if (self.ComboBox.currentText() == "Einnahmen"):
                 all_keys = self.parent.KEYS.IN
-                all_data = self.parent.DATA.IN
+                # all_data = self.parent.DATA.IN
         else:
                 all_keys = self.parent.KEYS.OUT
-                all_data = self.parent.DATA.OUT
+                # all_data = self.parent.DATA.OUT
         s_inout = self.ComboBox.currentText()
 
-        selected_keys =  {key:value for key, value in all_keys.items() if key in self.parent.KEYS.is_included }
-        arguments = [all_data, selected_keys, self.date_start, self.date_end]
-
+        # selected_keys =  {key:value for key, value in all_keys.items() if key in self.parent.KEYS.is_included }
+        selected_keys = [key for key  in all_keys.keys() if key in self.parent.KEYS.is_included]
+        # arguments = [all_data, selected_keys, self.date_start, self.date_end]
+        arguments = [self.parent.DATA.df_transactions, selected_keys, self.date_start, self.date_end]
         self.update_data(*arguments)    
 
         if self.radioPlot1.isChecked():
@@ -404,8 +406,6 @@ class InOutTab(OptionsWidget):
                 title="Plots")
 
         self.new_plot_window.show()
-        # self.new_plot_window.canvas_down_frame.setTitle("Monatsdurchschnitt")
-        # self.new_plot_window.canvas_frame.setTitle("Monatswerte")
 
 class AccountTab(OptionsWidget):
     def __init__(self, parent):
@@ -414,6 +414,7 @@ class AccountTab(OptionsWidget):
     def add_contents(self):
         self.add_time_period()
         self.add_configure()        
+        self.add_radio_log()       
         self.add_start_button()
 
     def on_pushButton_config(self):
@@ -425,50 +426,44 @@ class AccountTab(OptionsWidget):
     def on_pushButton_start(self):
         self.set_dates()        
 
-        # self.update_data(self.parent.DATA.inout_account, self.parent.KEYS.OUT,
-        #     self.date_start, self.date_end) 
-
-        self.update_data(self.parent.DATA.transfers, self.parent.DATA.changes, self.parent.KEYS.OUT,
+        self.update_data(self.parent.DATA.transfers, self.parent.DATA.changes, self.parent.DATA.is_included,
             self.date_start, self.date_end)               
 
-        arguments = [{**self.parent.DATA.changes, **{"Depot": self.parent.DEPOT.current_values_total}}, 
-                self.parent.DATA.is_included,
+        # arguments = [self.parent.DATA.changes, self.parent.DATA.is_included,
+        #         self.date_start, self.date_end]
+
+        arguments = [self.parent.DATA.df_acc, self.parent.DATA.is_included,
                 self.date_start, self.date_end]
 
-        arguments_diff = [{**self.parent.DATA.transfers,
-                 **{"Depot": self.parent.DEPOT.current_changes_total}}, self.parent.DATA.is_included,
-                self.date_start, self.date_end]
+        # arguments_diff = [self.parent.DATA.transfers, self.parent.DATA.is_included,
+        #         self.date_start, self.date_end]
+
+        if self.radioPlot1.isChecked():
+            style1 = "StackedBar"
+            style2 = "HorizontalBar"
+        else:
+            style1 = "StackedBarLog"
+            style2 = "HorizontalBarLog"                
+
 
         self.new_plot_window = NewPlotWindow(
-            arg1=["StackedBar", *analyse.prepare_stacked_bar_accounts(*arguments), "Kontostände pro Monat"],
-            arg2=["PlusMinusBar",*analyse.prepare_plusminus_bar(*arguments_diff), "Monatliche Veränderungen"], 
-            arg3=["HorizontalBar",*analyse.prepare_horizontal_bar_accounts(*arguments), "Letzte Kontostände"],                         
+            arg1=[style1, *analyse.prepare_stacked_bar_accounts(*arguments), "Kontostände pro Monat"],
+            arg2=["PlusMinusBar",*analyse.prepare_plusminus_bar(*arguments), "Monatliche Veränderungen"], 
+            arg3=[style2, *analyse.prepare_horizontal_bar_accounts(*arguments), "Letzte Kontostände"],                         
             arg4=["PieChart",*analyse.prepare_horizontal_bar_accounts(*arguments), "Prozentuale Verteilung des Vermögens"],
             title="Plots")
         self.new_plot_window.show()
 
     def update_data(self, in_data1, in_data2, keywords, start, end):
         dates = analyse.generate_dates(start, end)
-        use_data1 = analyse.group_data_by_month(in_data1, dates)
-        use_data2 = analyse.last_of_month(in_data2, dates)
+        use_data1 = analyse.group_data_by_month(in_data1, dates, keywords)
+        use_data2 = analyse.last_of_month(in_data2, dates, keywords)
         temp = use_data1
         for k1 in temp.keys():
             for k2 in temp[k1].keys():
                 use_data1[k1][k2]['sum'] = [use_data1[k1][k2]['sum'], use_data2[k1][k2]['sum']]
         
-        use_data = use_data1
-        for k in use_data1.keys():
-                new_sum0 = 0
-                new_sum1 = 0
-                new_all = []
-                for kk in use_data1[k].keys():
-                    new_sum0 += use_data1[k][kk]['sum'][0]
-                    new_sum1 += use_data1[k][kk]['sum'][1]
-                    new_all += use_data1[k][kk]['entries']
-        use_data[k]['Gesamt'] = {}
-        use_data[k]['Gesamt']['sum'] = [new_sum0, new_sum1]
-        use_data[k]['Gesamt']['entries'] = new_all
-        data_tab = DataTabs(self.parent.data_main_tab, use_data, rows=4)
+        data_tab = DataTabs(self.parent.data_main_tab, use_data1, rows=4)
 
 
 
@@ -518,26 +513,33 @@ class StockTab(OptionsWidget):
         else:
             relativ = False
 
-        arguments = [self.parent.DEPOT.all_information,
-                    self.parent.DEPOT.current_values_total,
-                     selected_keys,
-                self.date_start, self.date_end, relativ]
-        arguments_total = [self.parent.DEPOT.current_values, selected_keys,
-                self.date_start, self.date_end]   
+        # arguments = [self.parent.DEPOT.all_information,
+        #             self.parent.DEPOT.current_values_total,
+        #              selected_keys,
+        #         self.date_start, self.date_end, relativ]              
 
-        self.update_data(*arguments_total)                              
+        # arguments_total = [self.parent.DEPOT.current_values, selected_keys,
+        #         self.date_start, self.date_end]   
+
+        arguments = [self.parent.DEPOT.df_depot, selected_keys,
+                self.date_start, self.date_end, relativ]             
+
+        arguments_total = [self.parent.DEPOT.df_depot, selected_keys,
+                self.date_start, self.date_end]                
+
+        # self.update_data(*arguments_total)                              
 
         self.new_plot_window = NewPlotWindow(
             arg1=["ScatterPlot", *analyse.prepare_scatter_total_change_stocks(*arguments), "Gesamte Veränderung des Depots"],
             arg2=["ScatterPlotBar", *analyse.prepare_scatter_daily_changes_stocks(*arguments), "Tägliche Veränderung des Depots"],                                     
-            arg3=["StackedBar", *analyse.prepare_stacked_bar_accounts(*arguments_total), "Absolute Zusammensetzung des Depots"], 
+            arg3=["StackedBar", *analyse.prepare_stacked_bar_stocks(*arguments_total), "Absolute Zusammensetzung des Depots"], 
             arg4=["PieChart", *analyse.prepare_pie_total_stocks(*arguments_total), "Prozentuale Zusammensetzung des Depots"],
             title="Plots")
         self.new_plot_window.show()   
 
     def update_data(self, in_data, keywords, start, end):
         dates = analyse.generate_dates(start, end)
-        use_data = analyse.last_of_month(in_data,dates)
+        use_data = analyse.last_of_month(in_data,dates, keywords)
         use_data['Depotwert'] = analyse.depot_value(use_data)
         data_tab = DataTabs(self.parent.data_main_tab, use_data)          
 
@@ -560,7 +562,13 @@ class App(QDialog):
         self.used_date_start = ""
         self.used_date_end = ""
         self.used_type = ""
-        self.all_dates = analyse.find_dates(analyse.summary_months(self.DATA.IN,list(self.KEYS.IN.keys())))
+        # self.all_dates = sorted(analyse.find_dates(analyse.summary_months(self.DATA.IN,list(self.KEYS.IN.keys()))),
+        #     key =  lambda x: datetime.datetime.strptime(x,"%m/%Y"))
+        df = self.DATA.df_transactions
+        self.all_dates = sorted(analyse.generate_dates(
+                    min(df[df['Date'] > datetime.date(2000,1,1)]['Date']), max(df['Date'])
+                ))
+        self.all_dates = [analyse.get_month(d) for d in self.all_dates]
 
         self.initUI(plots)
 
@@ -643,11 +651,14 @@ class DataTabs():
                     header.setSectionResizeMode(r, QHeaderView.ResizeToContents)
 
                 count = 0
+                summe  = [0 for r in range(rows-2)]
+                sum2 = 0
                 for d in tabs[t].keys():
                     if rows == 3:
                         if (abs(tabs[t][d]['sum'])) > 0:
                             table.setItem(count,0,QTableWidgetItem(d))
                             table.setItem(count,1,QTableWidgetItem("{:10.2f} Eur".format(tabs[t][d]['sum'])))
+                            summe[0] += tabs[t][d]['sum']
                             detail_button = QPushButton("Details")
                             detail_button.clicked.connect(self.make_show_details(tabs[t][d]['entries'],str(d)+" in "+str(t)))
                             table.setCellWidget(count,2,detail_button)
@@ -657,7 +668,8 @@ class DataTabs():
                         if (abs(tabs[t][d]['sum'][0])) > 0:
                             table.setItem(count,0,QTableWidgetItem(d))
                             count_s = 1
-                            for sum_entry in tabs[t][d]['sum']:
+                            for i, sum_entry in enumerate(tabs[t][d]['sum']):
+                                summe[i] += sum_entry
                                 table.setItem(count,count_s,QTableWidgetItem("{:10.2f} Eur".format(sum_entry)))
                                 count_s +=1
                             detail_button = QPushButton("Details")
@@ -665,9 +677,13 @@ class DataTabs():
                             table.setCellWidget(count,count_s,detail_button)
                             count += 1
                             table.setRowCount(count+1)
+                    table.setItem(count,0,QTableWidgetItem("Gesamt"))
+                    for r in range(rows-2):
+                        table.setItem(count,r+1,QTableWidgetItem("{:10.2f} Eur".format(summe[r])))
+                
 
 
-                table.sortItems(1)
+                # table.sortItems(1)
                 table.show()
                 layout.addWidget(table)
                 new_tab.setLayout(layout)

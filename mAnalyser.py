@@ -37,6 +37,7 @@ for d in os.listdir(os.path.join(main_path,"Data","Accounts")):
             all_accounts.append(LBB)
             all_account_names.append(x)
 accounts = analyse.Balance(all_accounts, all_account_names, KEYS)   
+# accounts.include_depot(depot)
 
 app = gui.QApplication(sys.argv)
 ex = gui.App(depot, accounts,KEYS,3)

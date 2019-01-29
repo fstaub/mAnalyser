@@ -102,8 +102,8 @@ class NewPlotCanvas(QMainWindow):
             self.canvas.mpl_connect("motion_notify_event", self.hover_bar)
         if (style == "StackedBarLog"):
             self.canvas.mpl_connect("motion_notify_event", self.hover_bar)            
-        if (style == "HorizontalBar"):
-            self.canvas.mpl_connect("motion_notify_event", self.hover_bar) 
+        # if (style == "HorizontalBar"):
+            # self.canvas.mpl_connect("motion_notify_event", self.hover_bar) 
 
         vbox = QVBoxLayout()
         vbox.addWidget(self.canvas)         # the matplotlib canvas
@@ -135,7 +135,8 @@ class NewPlotCanvas(QMainWindow):
 
         if (log is True):
             self.axes.set_yscale('log')
-
+        self.max_x = (dates[-1]-datetime.date(1,1,1)).days
+        self.min_x = (dates[0]-datetime.date(1,1,1)).days
         self.axes.set_title(ptitle, color=title_color)
 
         self.axes.set_facecolor(bg_color)
@@ -149,7 +150,10 @@ class NewPlotCanvas(QMainWindow):
         self.axes.xaxis.set_major_locator(mdates.MonthLocator()) 
         self.fig.autofmt_xdate()
 
-        self.annot = self.axes.annotate("", xy=(0,0), xytext=(20,20), textcoords="offset points",
+        self.x_values_text = 20
+
+        self.annot = self.axes.annotate("", xy=(0,0), xytext=(self.x_values_text,20), textcoords="offset points",
+                            ha = 'center',
                             bbox=dict(fc="w"),
                             arrowprops=dict(arrowstyle="->"))
         self.annot.set_visible(False)
@@ -220,23 +224,26 @@ class NewPlotCanvas(QMainWindow):
                     this_label = (labels[i])[:min([15,len(labels[i])])]
                 self.axes.annotate(this_label, xy=(x, y), xytext=(1.35*np.sign(x), 1.4*y),
                      horizontalalignment=horizontalalignment, **kw)
-        self.axes.set_title(ptitle, color=title_color)
+        # self.axes.set_title(ptitle, color=title_color)
         self.canvas.draw()  
 
     def on_draw_HorizontalBar(self, data, labels, ptitle, log=False): 
         self.fig.clear()
         self.axes = self.fig.add_subplot(111)        
 
-        x = np.arange(len(data))
+        x = np.flip(np.arange(max(len(data),10)))
         # val = [abs(sum([x for x in y.values()]))/(1*len(dates)) for y in data]
         self.sc = []
         self.all_label = []
         for i in range(len(x)):
-            self.label_store={}
-            self.sc.append(self.axes.barh(x[i], data[i], 0.75, color=use_colors[i]))
-            for bar in self.sc[-1]:
-                  self.label_store[bar] = labels[i]   
-            self.all_label.append(self.label_store)
+            if i < len(data):
+                self.label_store={}
+                self.sc.append(self.axes.barh(x[i], data[i], 0.75, color=use_colors[i]))
+                for bar in self.sc[-1]:
+                    self.label_store[bar] = labels[i]   
+                self.all_label.append(self.label_store)
+            else:
+                self.sc.append(self.axes.barh(x[i], 0, 0.75))
 
         if (log):
             self.axes.set_xscale('log')    
@@ -250,7 +257,24 @@ class NewPlotCanvas(QMainWindow):
         self.axes.grid(color='gray', linestyle='-', linewidth=0.2)        
 
         for i,k in enumerate(labels):
-            self.axes.text(3.5, x[i]-0.2, str(k)+" ("+str(int(data[i]))+" Eur)",size=10)
+            if (log is False):
+                shift = max(data)/100
+                if data[i] > max(data)/2:
+                    self.axes.text(data[i]-shift, x[i], str(k)+" ("+str(int(data[i]))+" Eur)",
+                    size=10, horizontalalignment='right', verticalalignment='center', color='white')
+                else:
+                    self.axes.text(data[i]+shift, x[i], str(k)+" ("+str(int(data[i]))+" Eur)",size=10, 
+                        verticalalignment='center', horizontalalignment='left', color='white')
+            else:
+                shift = math.log(max(data))/100
+                if math.log(abs(data[i])) > math.log(max(data))/2:
+                    self.axes.text(math.exp(math.log(abs(data[i])-shift)), x[i], str(k)+" ("+str(int(data[i]))+" Eur)",
+                    size=10, horizontalalignment='right', verticalalignment='center', color='white')
+                else:
+                    self.axes.text(math.exp(math.log(abs(data[i])+shift)), x[i], str(k)+" ("+str(int(data[i]))+" Eur)",size=10, 
+                        verticalalignment='center', horizontalalignment='left', color='white')
+
+
         self.annot = self.axes.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
                             bbox=dict(fc="w"),
                             arrowprops=dict(arrowstyle="->"))
@@ -310,9 +334,19 @@ class NewPlotCanvas(QMainWindow):
         x = bar.get_x()+bar.get_width()/2.
         y = bar.get_y()+bar.get_height()/2
         y_val = bar.get_height()
-        self.annot.xy = (x,y)
+        # self.annot.xy = (x,y)
+        if (x -self.min_x) > (self.max_x - self.min_x)/2:
+            xy_off=(-20,20)
+        else:
+            xy_off=(20,20)
         text = label+"\n" + "({:.2f}Eur)".format(y_val) #"#self.label_store[bar]
-        self.annot.set_text(text)
+
+        self.annot = self.axes.annotate(text, xy=(x,y), xytext=xy_off, textcoords="offset points",
+                            ha = 'center',
+                            bbox=dict(fc="w"),
+                            arrowprops=dict(arrowstyle="->"))
+
+        # self.annot.set_text(text)
         self.annot.get_bbox_patch().set_alpha(0.4)        
 
 

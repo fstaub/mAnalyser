@@ -29,7 +29,10 @@ class Parser():
         out = []
         listOfFile = os.listdir(dirName)
         for file in listOfFile:
-            out = out + (self.parse(dirName+file))
+            try:
+                out = out + (self.parse(dirName+file))
+            except:
+                print("broken file: ", file)
         # self.all_information, self.internal_transfers, self.start = self.filter_redundant(out)
         self.all_information = out
 
@@ -49,7 +52,10 @@ class DiBa_Parser(Parser):
         return data
 
     def format_entry(self,text):
-        out=[self.format_date(text[0]),self.purpose(text[2],text[3],text[4]),self.format_number(text[-2])]
+        try:
+            out=[self.format_date(text[0]),self.purpose(text[2],text[3],text[4]),self.format_number(text[-2])]
+        except:
+            print("problematic line:", text)
         return out
 
     def purpose(self,in1,in2,in3):

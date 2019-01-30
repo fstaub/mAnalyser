@@ -57,15 +57,6 @@ class Balance():
                return k
         return 'not categorised'
 
-    # def include_depot(self, depot):
-    #     self.is_included.append("Depot")
-    #     print("X")
-    #     all_columns_accounts = ['Date', 'Account', 'Transaction', 'Sum']
-    #     for index, row in  depot.df_depot.iterrows():
-    #         new = [row['Date'], 'Depot', row['Amount'], 'Sum'] 
-    #         self.df_acc = self.df_acc.append(pd.Series(new, index=all_columns_accounts), ignore_index=True)            
-    #     self.is_included.append("Depot")
-    #     print("Y")
     def include_depot(self, depot):
         df = depot.df_depot
         dates = list(df['Date'].unique())
@@ -74,13 +65,19 @@ class Balance():
         info['Date'] = []
         info['Account'] = []
         info['Transaction'] = []
+        info['Description'] = []
         info['Sum'] = []
 
         for d in dates:
+            new_df=df[df['Date'] == d]
+            summe = 0
+            for index, row in new_df.iterrows():
                 info['Date'].append(d)
                 info['Account'].append('Depot')
-                info['Transaction'].append(sum(df[df['Date']==d]['DailyWin']))
-                info['Sum'].append(sum(df[df['Date']==d]['Total']))
+                info['Description'].append(row['Name'])
+                info['Transaction'].append(row['DailyWin'])
+                summe += row['Total']
+                info['Sum'].append(summe)
         
         frames = [self.df_acc, pd.DataFrame(data = info)]
         self.df_acc = pd.concat(frames)                
@@ -110,6 +107,7 @@ class Balance():
         info = {}
         info['Date'] = []
         info['Account'] = []
+        info['Description'] = []
         info['Transaction'] = []
         info['Sum'] = []
         for name in names:
@@ -119,6 +117,7 @@ class Balance():
                 summe += row['Amount']
                 info['Date'].append(row['Date'])
                 info['Account'].append(name)
+                info['Description'].append(row['Description'])
                 info['Transaction'].append(row['Amount'])
                 info['Sum'].append(summe)
         self.df_acc = pd.DataFrame(data = info)
@@ -198,7 +197,7 @@ def last_entry_of_month_accounts(df, keywords, start, end):
                 & (df['Date'] < d)]
             if (len(entries) > 0):
                 new_main[k] = OrderedDict()                
-                new_main[k]['entries'] = [[e['Date'], e['Account'], e['Transaction']] for i, e in entries.iterrows()]
+                new_main[k]['entries'] = [[e['Date'], e['Description'], e['Transaction']] for i, e in entries.iterrows()]
                 new_main[k]['sum'] = [entries['Sum'].iloc[-1], sum(entries['Transaction'])]
         if len(new_main.keys())>0:                
             out[d] = new_main

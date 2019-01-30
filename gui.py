@@ -35,38 +35,40 @@ class Detail_Window(QDialog):
     ''' Creates a new window which displays in a table 
         all items belonging to a given category/month  
     '''
-    def __init__(self, data, title):
+    def __init__(self, data, target):
         super().__init__()
         # self.frame = QGroupBox("Details")
         layout = QVBoxLayout()
-        self.table = QTableWidget()
-        self.table.setRowCount(1)
-        self.table.setColumnCount(3)
+        # self.table = QTableWidget()
+        target.table.setRowCount(1)
+        target.table.setColumnCount(3)
+        # self.target = target
 
-        header = self.table.horizontalHeader()       
+        header = target.table.horizontalHeader()       
         header.setSectionResizeMode(0, QHeaderView.Stretch)
         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.Stretch)
 
-        self.title = title
-        self.left = 2
-        self.top = 2        
-        self.width = 600
-        self.height = 600
+        # self.title = title
+        # self.left = 2
+        # self.top = 2        
+        # self.width = 600
+        # self.height = 600
 
-        self.setWindowTitle(self.title)
-        self.setGeometry(self.left, self.top, self.width, self.height)
+        # self.setWindowTitle(self.title)
+        # self.setGeometry(self.left, self.top, self.width, self.height)
 
         count = 0
         for e in data:
-            self.table.setItem(count,0,QTableWidgetItem(e[0].strftime("%d.%m.%Y")))
-            self.table.setItem(count,1,QTableWidgetItem(str(e[1])) )     
-            self.table.setItem(count,2,QTableWidgetItem("{:10.2f} Eur".format(e[2])))  
+            target.table.setItem(count,0,QTableWidgetItem(e[0].strftime("%d.%m.%Y")))
+            target.table.setItem(count,1,QTableWidgetItem(str(e[1])) )     
+            target.table.setItem(count,2,QTableWidgetItem("{:10.2f} Eur".format(e[2])))  
             count += 1
-            self.table.setRowCount(count+1)
-        self.table.show()
-        layout.addWidget(self.table)
-        self.setLayout(layout)
+            target.table.setRowCount(count+1)
+        target.table.show()
+        # layout.addWidget(self.table)
+        # self.target.frame_details.clear()
+        # self.target.frame_details.setLayout(layout)
 
 class Data_Window(QDialog):
     ''' Creates a new window which displays in a table 
@@ -138,11 +140,36 @@ class NewPlotWindow(QDialog):
         self.width = 1300
         self.height = 1000
 
+        self.tabs = QTabWidget()
+        self.tab_plots = QWidget()
+        self.tab_data = QWidget()       
+        self.tab_data_tabs = QTabWidget()       
+        self.frame_details = QWidget()
+
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
+        # Plots
+        plots_layout = QVBoxLayout()
         self.add_plot_canvas_new4(arg1, arg2, arg3, arg4)                                    
-        layout.addWidget(self.canvas_frame)
+        plots_layout.addWidget(self.canvas_frame)
+        self.tab_plots.setLayout(plots_layout)
+        self.tabs.addTab(self.tab_plots, "Plots")
+
+        # # data
+        data_layout = QHBoxLayout()
+        data_layout.addWidget(self.tab_data_tabs)       
+        self.frame_layout = QHBoxLayout()
+        self.table = QTableWidget()      
+        self.frame_layout.addWidget(self.table)
+        self.frame_details.setLayout(self.frame_layout)
+
+        data_layout.addWidget(self.frame_details)  
+        self.tab_data.setLayout(data_layout)
+        self.tabs.addTab(self.tab_data, "Data")
+
+
+        layout.addWidget(self.tabs)
         self.setLayout(layout)      
 
     def add_plot_canvas_new4(self, arg1, arg2, arg3, arg4):
@@ -348,9 +375,9 @@ class InOutTab(OptionsWidget):
             ["Einnahmen","Ausgaben"], self.parent.KEYS)
         self.cw.show()
 
-    def update_data(self, df, keywords, start, end):
+    def update_data(self, target, df, keywords, start, end):
         use_data = analyse.last_entry_of_month_inout(df, keywords, start, end)
-        data_tab = DataTabs(self.parent.data_main_tab, use_data)
+        data_tab = DataTabs(target, use_data)
 
     def on_pushButton_start(self):
         self.set_dates()
@@ -363,8 +390,6 @@ class InOutTab(OptionsWidget):
 
         selected_keys = [key for key  in all_keys.keys() if key in self.parent.KEYS.is_included]
         arguments = [self.parent.DATA.df_transactions, selected_keys, self.date_start, self.date_end]
-
-        self.update_data(*arguments)    
 
         if self.radioPlot1.isChecked():
             style1 = "StackedBar"
@@ -379,6 +404,8 @@ class InOutTab(OptionsWidget):
                 arg3=["PieChart", *analyse.prepare_pie_chart(*arguments), "Prozentuale Verteilung der " + s_inout], 
                 arg1=[style2, *analyse.prepare_horizontal_bar(*arguments), "Durchschnittliche " + s_inout], 
                 title="Plots")
+
+        self.update_data(self.new_plot_window, *arguments)    
 
         self.new_plot_window.show()
 
@@ -412,7 +439,6 @@ class AccountTab(OptionsWidget):
             style2 = "HorizontalBarLog"                
 
 
-        self.update_data(*arguments)
         self.new_plot_window = NewPlotWindow(
             arg1=[style1, *analyse.prepare_stacked_bar_accounts(*arguments), "Kontostände pro Monat"],
             arg2=["PlusMinusBar",*analyse.prepare_plusminus_bar(*arguments), "Monatliche Veränderungen"], 
@@ -420,10 +446,11 @@ class AccountTab(OptionsWidget):
             arg4=["PieChart",*analyse.prepare_horizontal_bar_accounts(*arguments), "Prozentuale Verteilung des Vermögens"],
             title="Plots")
         self.new_plot_window.show()
+        self.update_data(self.new_plot_window, *arguments)        
 
-    def update_data(self, df,  keywords, start, end):
+    def update_data(self, target, df,  keywords, start, end):
         use_data = analyse.last_entry_of_month_accounts(df, keywords, start, end)
-        data_tab = DataTabs(self.parent.data_main_tab, use_data, rows=4)
+        data_tab = DataTabs(target, use_data, rows=4)
 
 
 
@@ -480,7 +507,7 @@ class StockTab(OptionsWidget):
         arguments = [self.parent.DEPOT.df_depot, selected_keys,
                 self.date_start, self.date_end]                
 
-        self.update_data(*arguments)                              
+                             
 
         self.new_plot_window = NewPlotWindow(
             arg1=["ScatterPlot", *analyse.prepare_scatter_total_change_stocks(*arguments_relative), "Gesamte Veränderung des Depots"],
@@ -488,11 +515,12 @@ class StockTab(OptionsWidget):
             arg3=["StackedBar", *analyse.prepare_stacked_bar_stocks(*arguments), "Absolute Zusammensetzung des Depots"], 
             arg4=["PieChart", *analyse.prepare_pie_total_stocks(*arguments), "Prozentuale Zusammensetzung des Depots"],
             title="Plots")
-        self.new_plot_window.show()   
+        self.new_plot_window.show()  
+        self.update_data(self.new_plot_window, *arguments)          
 
-    def update_data(self, df, keywords, start, end):
+    def update_data(self, target, df, keywords, start, end):
         use_data = analyse.last_entry_of_month_stocks(df, keywords, start, end)
-        data_tab = DataTabs(self.parent.data_main_tab, use_data, rows=4)          
+        data_tab = DataTabs(target, use_data, rows=4)          
 
 
 class App(QDialog):
@@ -556,7 +584,7 @@ class App(QDialog):
         self.setGeometry(self.left, self.top, self.width, self.height)
 
         self.add_selection_group()
-        self.add_data_group()
+        # self.add_data_group()
         # self.add_button_data()
 
         self.mainLayout = QHBoxLayout()
@@ -565,7 +593,7 @@ class App(QDialog):
         self.left_frame.setFixedWidth(350)
         # layout_left.addWidget(self.pushButton)            
         layout_left.addWidget(self.selection_frame)
-        layout_left.addWidget(self.data_frame)
+        # layout_left.addWidget(self.data_frame)
  
         self.left_frame.setLayout(layout_left)
 
@@ -581,14 +609,15 @@ class App(QDialog):
 
 
 class DataTabs():
-    def __init__(self, tab, tabs, rows=3):
-        self.tab = tab
+    def __init__(self, target, tabs, rows=3):
+        self.target = target
+        self.tab = target.tab_data_tabs
         self.tab.clear()  
         self.generate_tab_content(tabs,rows=rows)
 
     def generate_tab_content(self, tabs,rows=3):
             for t in tabs.keys():
-                new_tab=QWidget()
+                new_tab = QWidget()
                 layout = QVBoxLayout()
                 table = QTableWidget()
                 table.setRowCount(1)
@@ -609,12 +638,11 @@ class DataTabs():
                             table.setItem(count,1,QTableWidgetItem("{:10.2f} Eur".format(tabs[t][d]['sum'])))
                             summe[0] += tabs[t][d]['sum']
                             detail_button = QPushButton("Details")
-                            detail_button.clicked.connect(self.make_show_details(tabs[t][d]['entries'],str(d)+" in "+str(t)))
+                            detail_button.clicked.connect(self.make_show_details(tabs[t][d]['entries'],self.target))
                             table.setCellWidget(count,2,detail_button)
                             count += 1
                             table.setRowCount(count+1)
                     else:
-                        print(t,d)
                         if (abs(tabs[t][d]['sum'][0])) > 0:
                             table.setItem(count,0,QTableWidgetItem(d))
                             count_s = 1
@@ -623,7 +651,7 @@ class DataTabs():
                                 table.setItem(count,count_s,QTableWidgetItem("{:10.2f} Eur".format(sum_entry)))
                                 count_s +=1
                             detail_button = QPushButton("Details")
-                            detail_button.clicked.connect(self.make_show_details(tabs[t][d]['entries'],str(d)+" in "+str(t)))
+                            detail_button.clicked.connect(self.make_show_details(tabs[t][d]['entries'],self.target))
                             table.setCellWidget(count,count_s,detail_button)
                             count += 1
                             table.setRowCount(count+1)
@@ -632,8 +660,6 @@ class DataTabs():
                         table.setItem(count,r+1,QTableWidgetItem("{:10.2f} Eur".format(summe[r])))
                 
 
-
-                # table.sortItems(1)
                 table.show()
                 layout.addWidget(table)
                 new_tab.setLayout(layout)
@@ -644,8 +670,8 @@ class DataTabs():
             self.tab.setCurrentIndex(len(tabs.keys())-1)
 
 
-    def make_show_details(self,to_show,title):
+    def make_show_details(self, to_show, target):
         def show_details():
-            self.dw = Detail_Window(to_show,title)
-            self.dw.show()
+            self.dw = Detail_Window(to_show,target)
+            # self.dw.show()
         return show_details 

@@ -51,11 +51,11 @@ class Balance():
         self.collect(accounts, names, keywords)        
         self.get_changes_accounts(accounts, names, self.df_transactions)
 
-    def get_category(self, entry, keywords):
-        for k in keywords.keys():
-            if  max([entry.find(x) for x in keywords[k]]) > -1:
-               return k
-        return 'not categorised'
+    # def get_category(self, entry, keywords):
+    #     for k in keywords.keys():
+    #         if  max([entry.find(x) for x in keywords[k]]) > -1:
+    #            return k
+    #     return 'not categorised'
 
     def include_depot(self, depot):
         df = depot.df_depot
@@ -90,7 +90,8 @@ class Balance():
         info['Description'] = []
         info['Amount'] = []
         info['InOut'] = []
-        info['Category'] = []
+        info['Category0'] = []
+        info['Category1'] = []
         info['Account'] = []
         for ac, name  in zip (accounts, names):
             for entry in ac.all_information:
@@ -98,7 +99,9 @@ class Balance():
                 info['Description'].append(entry[1])
                 info['Amount'].append(entry[2])
                 info['InOut'].append('IN' if entry[2] > 0  else 'OUT')
-                info['Category'].append( self.get_category(entry[1], keywords.IN if entry[2] > 0 else keywords.OUT))
+                cat1, cat2 = get_category(entry[1], keywords)
+                info['Category0'].append(cat1)
+                info['Category1'].append(cat2)
                 info['Account'].append(name)
 
         self.df_transactions = pd.DataFrame(data = info)         
@@ -126,10 +129,31 @@ class Balance():
 
 # HELPER FUNCTIONS
 def get_category(text, keywords):
-    for k in keywords.keys():
-        if  max([text.find(x) for x in keywords[k]]) > -1:
-           return k
-    return 'not categorised'
+    up = text.upper()
+    k1 = 'not categorised'
+    k2 = 'not categorised'
+    for k in keywords.IN[0].keys():
+        if  max([up.find(x.upper()) for x in keywords.IN[0][k]]) > -1:
+           k1 = k
+    for k in keywords.OUT[0].keys():
+        if  max([up.find(x.upper()) for x in keywords.OUT[0][k]]) > -1:
+           k1 = k
+    for k in keywords.INTERNAL[0].keys():
+        if  max([up.find(x.upper()) for x in keywords.INTERNAL[0][k]]) > -1:
+           k1 = k                   
+
+    up = k1.upper()
+    for k in keywords.IN[1].keys():
+        if  max([up.find(x.upper()) for x in keywords.IN[1][k]]) > -1:
+           k2 = k
+    for k in keywords.OUT[1].keys():
+        if  max([up.find(x.upper()) for x in keywords.OUT[1][k]]) > -1:
+           k2 = k
+    for k in keywords.INTERNAL[1].keys():
+        if  max([up.find(x.upper()) for x in keywords.INTERNAL[1][k]]) > -1:
+           k2 = k                   
+
+    return k1, k2
 
 # Helper functions for dates     
 
@@ -169,13 +193,13 @@ def skip_day(date):
 # Functions to generate data for DataTabs      
 #----------------------------------------------
 
-def last_entry_of_month_inout(df, keywords, start, end):
+def last_entry_of_month_inout(df, keywords, level, start, end):
     dates = generate_dates(start, end)
     out = OrderedDict()
     for d in dates:
         new_main = OrderedDict()
         for k in keywords:
-            entries = df[(df['Category'] == k)
+            entries = df[(df['Category' + str(level)] == k)
                 & (df['Date'] >= skip_day(d))
                 & (df['Date'] < d)]
             if (len(entries) > 0):
@@ -227,13 +251,13 @@ def last_entry_of_month_stocks(df, keywords, start, end):
 #----------------------------------------------
  
 # IN/OUT 
-def prepare_stacked_bar(df, keywords, start, end):
+def prepare_stacked_bar(df, keywords, level, start, end):
         dates = generate_dates(start, end)
         data = []
         for d in dates:
             row = []
             for k in keywords:
-                row.append(sum(df[(df['Category']==k)
+                row.append(sum(df[(df['Category'+str(level)]==k)
                  & (df['Date'] >= skip_day(d))
                  & (df['Date'] < d)
                 ]['Amount']))
@@ -241,21 +265,21 @@ def prepare_stacked_bar(df, keywords, start, end):
 
         return data, keywords, skip_days(dates)
 
-def prepare_pie_chart(df, keywords, start, end):
+def prepare_pie_chart(df, keywords, level, start, end):
     nr_months = len(generate_dates(start, end))
     data = []
     for k in keywords:
-            data.append(abs(sum(df[(df['Category']==k)
+            data.append(abs(sum(df[(df['Category'+str(level)]==k)
                  & (df['Date'] >= skip_day(start))
                  & (df['Date'] < end)
             ]['Amount']/nr_months)))
     return data, keywords
 
-def prepare_horizontal_bar(df, keywords, start, end):
+def prepare_horizontal_bar(df, keywords, level, start, end):
     data = []
     nr_months = len(generate_dates(start, end))    
     for k in keywords:
-            data.append(abs(sum(df[(df['Category']==k)
+            data.append(abs(sum(df[(df['Category' + str(level)]==k)
                  & (df['Date'] >= skip_day(start))
                  & (df['Date'] < end)
             ]['Amount']/nr_months)))

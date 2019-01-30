@@ -40,5 +40,5 @@ accounts = analyse.Balance(all_accounts, all_account_names, KEYS)
 accounts.include_depot(depot)
 
 app = gui.QApplication(sys.argv)
-ex = gui.App(depot, accounts,KEYS,3)
+ex = gui.App(depot, accounts, KEYS, 3)
 sys.exit(app.exec_())                                

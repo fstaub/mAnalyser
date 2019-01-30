@@ -170,11 +170,13 @@ class Keywords():
     def __init__(self,file):
         with open(file) as json_data:
             d = json.load(json_data, object_pairs_hook=collections.OrderedDict)
-        self.IN = d['Einkommen']
-        self.OUT = d['Ausgaben']
-        self.INTERNAL = d['Internal']
-        self.is_included = []
-        for k in list(list(self.IN.keys()) + list(self.OUT.keys())):
-            if k[-2:] != "**":
-                self.is_included.append(k) 
+        self.IN = [d['Level1']['Einkommen'],d['Level2']['Einkommen']]
+        self.OUT = [d['Level1']['Ausgaben'],d['Level2']['Ausgaben']]
+        self.INTERNAL = [d['Level1']['Internal'],d['Level2']['Internal']]
 
+        self.is_included = [[],[]]
+
+        for i in range(len(self.IN)):
+            for k in list(list(self.IN[i].keys()) + list(self.OUT[i].keys())):
+                if k[-2:] != "**":
+                    self.is_included[i].append(k) 

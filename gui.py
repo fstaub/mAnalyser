@@ -20,6 +20,7 @@ import mplcursors
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
         QDial, QDialog, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
         QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy,
+        QTreeWidget, QTreeWidgetItem, QTreeWidgetItemIterator,
         QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget, QTextEdit,
         QVBoxLayout, QWidget,QMainWindow,QToolButton,QMenu,QTableWidgetItem,QHeaderView)
 from PyQt5.QtGui import QIcon, QStandardItemModel
@@ -74,7 +75,7 @@ class Data_Window(QDialog):
     ''' Creates a new window which displays in a table 
         all items belonging to a given category/month  
     '''
-    def __init__(self, all_data, title):
+    def __init__(self, df, title):
         super().__init__()
         # self.frame = QGroupBox("Details")
            
@@ -88,15 +89,41 @@ class Data_Window(QDialog):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
-        self.generate_tables(all_data)
+        self.generate_tables(df)
     
-    def generate_tables(self, all_data):
+    def generate_tables(self, df):
         self.layout = QVBoxLayout()
 
         self.tabs = QTabWidget()
 
-        for i in all_data:
-          for k in i.keys():   
+        keys = df['Category'].unique()
+
+        # for i in all_data:
+        #   for k in i.keys():   
+        # # Add tabs
+        #     new_tab = QWidget()
+        #     self.tabs.addTab(new_tab, k)
+        #     tab_layout = QVBoxLayout()
+        #     table = QTableWidget()
+        #     table.setRowCount(1)
+        #     table.setColumnCount(3)
+        #     header = table.horizontalHeader()       
+        #     header.setSectionResizeMode(0, QHeaderView.Stretch)
+        #     header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        #     header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+
+        #     count = 0
+        #     for e in i[k]:
+        #         table.setItem(count,0,QTableWidgetItem(e[0].strftime("%d.%m.%Y")))
+        #         table.setItem(count,1,QTableWidgetItem(str(e[1])) )     
+        #         table.setItem(count,2,QTableWidgetItem("{:10.2f} Eur".format(e[2])))  
+        #         count += 1
+        #         table.setRowCount(count+1)
+        #     table.show()
+        #     tab_layout.addWidget(table)
+        #     new_tab.setLayout(tab_layout)   
+        # 
+        for k in keys:   
         # Add tabs
             new_tab = QWidget()
             self.tabs.addTab(new_tab, k)
@@ -110,15 +137,17 @@ class Data_Window(QDialog):
             header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
 
             count = 0
-            for e in i[k]:
-                table.setItem(count,0,QTableWidgetItem(e[0].strftime("%d.%m.%Y")))
-                table.setItem(count,1,QTableWidgetItem(str(e[1])) )     
-                table.setItem(count,2,QTableWidgetItem("{:10.2f} Eur".format(e[2])))  
+
+            new_df=df[df['Category'] == k].sort_values(by=['Date'])
+            for index, e in new_df.iterrows():
+                table.setItem(count,0,QTableWidgetItem(e['Date'].strftime("%d.%m.%Y")))
+                table.setItem(count,1,QTableWidgetItem(str(e['Description'])) )     
+                table.setItem(count,2,QTableWidgetItem("{:10.2f} Eur".format(e['Amount'])))  
                 count += 1
                 table.setRowCount(count+1)
             table.show()
             tab_layout.addWidget(table)
-            new_tab.setLayout(tab_layout)            
+            new_tab.setLayout(tab_layout)           
 
 
         self.layout.addWidget(self.tabs)
@@ -211,7 +240,7 @@ class ConfigWindow(QDialog):
     ''' opens a new window to configure/select 
         what keys are included in the plots
     '''
-    def __init__(self, grandparent, keys, titles, ref_object):
+    def __init__(self, grandparent, keys, titles, ref_object, depth=1):
         super().__init__()
         # settings_frame = QGroupBox("Configuration")
         layout = QVBoxLayout()
@@ -224,24 +253,62 @@ class ConfigWindow(QDialog):
         self.is_selected = ref_object.is_included
         self.grandparent = grandparent
 
-        for i, k in enumerate(keys):
-        # Add tabs
-            self.single_tabs.append(QWidget())
-            self.tabs.addTab(self.single_tabs[-1], titles[i])
-            tab_layout = QVBoxLayout(self)
-            for  kk in k.keys():
-                self.boxes.append(QCheckBox(kk,self))
-                self.box_labels.append(kk)
-                # if kk in self.grandparent.parent.KEYS.is_included:
-                if kk in self.is_selected:
-                    self.boxes[-1].setChecked(True)
-                tab_layout.addWidget(self.boxes[-1])  
-            self.single_tabs[-1].setLayout(tab_layout)
+        self.parent_boxes = []
+        self.child_boxes = []
+        self.parent_labels = []
+        self.child_labels = []
+
+        if depth == 2:
+            self.checked = set(self.is_selected[0]+self.is_selected[1])
+
+
+        if (depth==1):
+            for i, k in enumerate(keys):
+                self.single_tabs.append(QWidget())
+                self.tabs.addTab(self.single_tabs[-1], titles[i])
+                tab_layout = QVBoxLayout(self)
+                for  kk in k.keys():
+                    self.boxes.append(QCheckBox(kk,self))
+                    self.box_labels.append(kk)
+                    if kk in self.is_selected:
+                        self.boxes[-1].setChecked(True)
+                    tab_layout.addWidget(self.boxes[-1])  
+                self.single_tabs[-1].setLayout(tab_layout)
+        else:
+            for i, k in enumerate(keys):
+                self.single_tabs.append(QWidget())
+                self.tabs.addTab(self.single_tabs[-1], titles[i])
+                tab_layout = QVBoxLayout(self)
+                tree    = QTreeWidget ()
+                tree.itemChanged.connect(self.handleItemChanged)                 
+                headerItem  = QTreeWidgetItem()
+                item    = QTreeWidgetItem()
+                
+                for  kk in k[1].keys():
+                    self.parent_boxes.append(QTreeWidgetItem(tree))
+                    self.parent_labels.append(kk)
+                    self.parent_boxes[-1].setText(0, kk)
+                    self.parent_boxes[-1].setFlags(self.parent_boxes[-1].flags() | Qt.ItemIsTristate | Qt.ItemIsUserCheckable)
+                    for k2 in k[1][kk]:
+                        self.child_boxes.append(QTreeWidgetItem(self.parent_boxes[-1]))
+                        self.child_labels.append(k2)
+                        self.child_boxes[-1].setFlags(self.child_boxes[-1].flags() | Qt.ItemIsUserCheckable)
+                        self.child_boxes[-1].setText(0, k2)
+                        if kk in self.is_selected[1]:
+                            self.child_boxes[-1].setCheckState(0, Qt.Checked)
+                        else:
+                            self.child_boxes[-1].setCheckState(0, Qt.Unchecked)
+                tab_layout.addWidget(tree)
+                self.single_tabs[-1].setLayout(tab_layout)
+
 
         buttons = QGroupBox("")
         button_layout = QHBoxLayout()        
         self.button_ok=QPushButton('Speichern')
-        self.button_ok.clicked.connect(self.on_pushButton_ok)
+        if (depth==1):
+            self.button_ok.clicked.connect(self.on_pushButton_ok)
+        else:
+            self.button_ok.clicked.connect(self.on_pushButton_ok_depth2)
         button_layout.addWidget(self.button_ok)
 
         self.button_cancel=QPushButton('Schließen')
@@ -253,13 +320,31 @@ class ConfigWindow(QDialog):
         layout.addWidget(buttons)
         self.setLayout(layout)
 
+    def handleItemChanged(self, item, column):
+        if item.checkState(column) == Qt.Checked:
+            self.checked.add(item.text(column))
+        elif item.checkState(column) == Qt.Unchecked:
+            if item.text(column) in self.checked:
+                self.checked.remove(item.text(column))
+
     def on_pushButton_ok(self):
         self.is_selected = []
         for i, n in zip(self.boxes, self.box_labels):
             if i.isChecked() is True:
                 self.is_selected.append(n)
         self.ref.is_included = self.is_selected
-        # self.close()
+
+    def on_pushButton_ok_depth2(self):
+        self.is_selected = [[],[]]
+        for n in self.parent_labels:
+            if n in self.checked:
+                self.is_selected[1].append(n)
+        for n in self.child_labels:
+            if n in self.checked:
+                self.is_selected[0].append(n)
+
+        self.ref.is_included = self.is_selected
+ 
 
     def on_pushButton_cancel(self):
         self.close()
@@ -324,6 +409,12 @@ class OptionsWidget(QWidget):
         self.radioPlot1.setChecked(True) 	   
         self.layout.addWidget(QColumn(self.radioPlot1, self.radioPlot2 ))        
 
+    def add_radio_level(self):	
+        self.radioLevel1 = QRadioButton("Level 1")	 
+        self.radioLevel2 = QRadioButton("Level 2")	 
+        self.radioLevel1.setChecked(True) 	   
+        self.layout.addWidget(QColumn(self.radioLevel1, self.radioLevel2 ))               
+
     def on_pushButton_start(self):
         pass
 
@@ -344,6 +435,7 @@ class InOutTab(OptionsWidget):
         self.add_time_period()
         self.add_configure()
         self.add_radio_log()
+        self.add_radio_level()
         self.add_button_data()
         self.add_start_button()
 
@@ -361,35 +453,37 @@ class InOutTab(OptionsWidget):
         self.layout.addWidget(self.pushButton)  
 
     def on_pushButton_data(self):
-        pass
-        # self.data_window = Data_Window([self.parent.DATA.IN, self.parent.DATA.OUT, 
-        #     {'Not Categorised (Einkommen)': self.parent.DATA.missing_in,
-        #     'Not Categorised (Ausgaben)': self.parent.DATA.missing_out,
-        #     'Internal': self.parent.DATA.internal}],
-        #     "Input Data")
-        # self.data_window.show()         
+        # pass
+        self.data_window = Data_Window(self.parent.DATA.df_transactions, "Input Data")
+        self.data_window.show()         
 
 
     def on_pushButton_config(self):
         self.cw = ConfigWindow(self, [self.parent.KEYS.IN, self.parent.KEYS.OUT], 
-            ["Einnahmen","Ausgaben"], self.parent.KEYS)
+            ["Einnahmen","Ausgaben"], self.parent.KEYS, depth=2)
         self.cw.show()
 
-    def update_data(self, target, df, keywords, start, end):
-        use_data = analyse.last_entry_of_month_inout(df, keywords, start, end)
+    def update_data(self, target, df, keywords, level, start, end):
+        use_data = analyse.last_entry_of_month_inout(df, keywords, level, start, end)
         data_tab = DataTabs(target, use_data)
 
     def on_pushButton_start(self):
         self.set_dates()
 
-        if (self.ComboBox.currentText() == "Einnahmen"):
-                all_keys = self.parent.KEYS.IN
+        if self.radioLevel1.isChecked():            
+            level = 0
         else:
-                all_keys = self.parent.KEYS.OUT
+            level = 1
+
+
+        if (self.ComboBox.currentText() == "Einnahmen"):
+                all_keys = self.parent.KEYS.IN[level]
+        else:
+                all_keys = self.parent.KEYS.OUT[level]
         s_inout = self.ComboBox.currentText()
 
-        selected_keys = [key for key  in all_keys.keys() if key in self.parent.KEYS.is_included]
-        arguments = [self.parent.DATA.df_transactions, selected_keys, self.date_start, self.date_end]
+        selected_keys = [key for key  in all_keys.keys() if key in self.parent.KEYS.is_included[level]]
+        arguments = [self.parent.DATA.df_transactions, selected_keys, level, self.date_start, self.date_end]
 
         if self.radioPlot1.isChecked():
             style1 = "StackedBar"
@@ -397,6 +491,7 @@ class InOutTab(OptionsWidget):
         else:
             style1 = "StackedBarLog"
             style2 = "HorizontalBarLog"
+
 
         self.new_plot_window = NewPlotWindow( 
                 arg4=[style1, *analyse.prepare_stacked_bar(*arguments), s_inout + " pro Monat"],
@@ -573,9 +668,12 @@ class App(QDialog):
     def add_data_group(self):
         self.data_frame = QGroupBox("Data")
         layout = QVBoxLayout()
-        self.data_main_tab = QTabWidget()
-        layout.addWidget(self.data_main_tab)
-        layout.addStretch()
+        layout.addWidget(QColumn(QLabel("Konten:"), QLabel(str(len(self.DATA.df_acc)) + " Kontobewegungen")))
+        layout.addWidget(QColumn(QLabel("Datensatz:"), QLabel(str(len(self.DATA.df_transactions)) + " Kontobewegungen")))
+
+        # self.data_main_tab = QTabWidget()
+        # layout.addWidget(self.data_main_tab)
+        # layout.addStretch()
         self.data_frame.setLayout(layout)  
 
 
@@ -584,7 +682,7 @@ class App(QDialog):
         self.setGeometry(self.left, self.top, self.width, self.height)
 
         self.add_selection_group()
-        # self.add_data_group()
+        self.add_data_group()
         # self.add_button_data()
 
         self.mainLayout = QHBoxLayout()
@@ -593,7 +691,7 @@ class App(QDialog):
         self.left_frame.setFixedWidth(350)
         # layout_left.addWidget(self.pushButton)            
         layout_left.addWidget(self.selection_frame)
-        # layout_left.addWidget(self.data_frame)
+        layout_left.addWidget(self.data_frame)
  
         self.left_frame.setLayout(layout_left)
 

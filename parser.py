@@ -29,10 +29,11 @@ class Parser():
         out = []
         listOfFile = os.listdir(dirName)
         for file in listOfFile:
-            try:
-                out = out + (self.parse(dirName+file))
-            except:
-                print("broken file: ", file)
+            # try:
+            #     out = out + (self.parse(dirName+file))
+            # except:
+            #     print("broken file: ", file)
+            out = out + (self.parse(dirName+file))
         # self.all_information, self.internal_transfers, self.start = self.filter_redundant(out)
         self.all_information = out
 
@@ -79,6 +80,33 @@ class LBB_Parser(Parser):
     def format_entry(self,text):
         out=[self.format_date(text[1]),text[3],self.format_number(text[-1])]
         return out
+
+class Amazon_Parser(Parser):
+    def parse(self,file):
+        data=[]
+        with open(file, newline='') as csvfile:
+            spamreader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            for row in spamreader:
+                data.append(self.format_entry(row))
+                data.append(self.format_entry_payment(row))
+        return data
+
+    def format_entry(self,text):
+        out=[self.format_date(text[3]), text[1] + " for " + text[2] ,self.format_number(text[4])]
+        return out
+
+    def format_entry_payment(self,text):
+        out=[self.format_date(text[3]), "Amazon Payment", -self.format_number(text[4])]
+        return out
+
+    def format_number(self,in_string):
+        return -float(in_string.replace("EUR","").replace(".","").replace(",","."))
+
+    def format_date(self, in_string):
+        return  datetime.datetime.strptime(in_string, "%Y-%m-%d").date()
+
+
+
 
 
 class CA_Parser(Parser):

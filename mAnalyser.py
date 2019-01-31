@@ -21,6 +21,11 @@ for d in os.listdir(os.path.join(main_path,"Data","Accounts")):
             PayPal = parser.PayPal_Parser(os.path.join(main_path,"Data","Accounts",d,x,""),KEYS)
             all_accounts.append(PayPal)
             all_account_names.append(x)
+    if (d == "Amazon"):
+        for x in os.listdir(os.path.join(main_path,"Data","Accounts",d)):
+            Amazon = parser.Amazon_Parser(os.path.join(main_path,"Data","Accounts",d,x,""),KEYS)
+            all_accounts.append(Amazon)
+            all_account_names.append(x)            
     if (d == "DiBa"):
         for x in os.listdir(os.path.join(main_path,"Data","Accounts",d)):
             DiBa = parser.DiBa_Parser(os.path.join(main_path,"Data","Accounts",d,x,""),KEYS)        

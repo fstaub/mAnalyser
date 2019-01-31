@@ -83,7 +83,7 @@ class Data_Window(QDialog):
         self.title = title
         self.left = 2
         self.top = 2        
-        self.width = 600
+        self.width = 1000
         self.height = 600
 
         self.setWindowTitle(self.title)
@@ -96,7 +96,7 @@ class Data_Window(QDialog):
 
         self.tabs = QTabWidget()
 
-        keys = df['Category'].unique()
+        keys = df['Category1'].unique()
 
         # for i in all_data:
         #   for k in i.keys():   
@@ -130,19 +130,21 @@ class Data_Window(QDialog):
             tab_layout = QVBoxLayout()
             table = QTableWidget()
             table.setRowCount(1)
-            table.setColumnCount(3)
+            table.setColumnCount(4)
             header = table.horizontalHeader()       
             header.setSectionResizeMode(0, QHeaderView.Stretch)
             header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
             header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
 
             count = 0
 
-            new_df=df[df['Category'] == k].sort_values(by=['Date'])
+            new_df=df[df['Category1'] == k].sort_values(by=['Date'])
             for index, e in new_df.iterrows():
                 table.setItem(count,0,QTableWidgetItem(e['Date'].strftime("%d.%m.%Y")))
                 table.setItem(count,1,QTableWidgetItem(str(e['Description'])) )     
-                table.setItem(count,2,QTableWidgetItem("{:10.2f} Eur".format(e['Amount'])))  
+                table.setItem(count,2,QTableWidgetItem(str(e['Category0'])) )     
+                table.setItem(count,3,QTableWidgetItem("{:10.2f} Eur".format(e['Amount'])))  
                 count += 1
                 table.setRowCount(count+1)
             table.show()
@@ -240,7 +242,7 @@ class ConfigWindow(QDialog):
     ''' opens a new window to configure/select 
         what keys are included in the plots
     '''
-    def __init__(self, grandparent, keys, titles, ref_object, depth=1):
+    def __init__(self, parent, keys, titles, ref_object, depth=1):
         super().__init__()
         # settings_frame = QGroupBox("Configuration")
         layout = QVBoxLayout()
@@ -251,7 +253,7 @@ class ConfigWindow(QDialog):
         self.box_labels = []
         self.ref = ref_object
         self.is_selected = ref_object.is_included
-        self.grandparent = grandparent
+        self.parent = parent
 
         self.parent_boxes = []
         self.child_boxes = []
@@ -333,6 +335,7 @@ class ConfigWindow(QDialog):
             if i.isChecked() is True:
                 self.is_selected.append(n)
         self.ref.is_included = self.is_selected
+        self.parent.on_pushButton_start()
 
     def on_pushButton_ok_depth2(self):
         self.is_selected = [[],[]]
@@ -344,6 +347,7 @@ class ConfigWindow(QDialog):
                 self.is_selected[0].append(n)
 
         self.ref.is_included = self.is_selected
+        self.parent.on_pushButton_start()
  
 
     def on_pushButton_cancel(self):
@@ -358,6 +362,16 @@ def QColumn(w1,w2):
         layout.addWidget(w2)
         group.setLayout(layout)
         return group   
+
+def QColumn3(w1,w2,w3):
+        ''' command to arrange three given widgets in a line'''
+        group = QGroupBox()
+        layout = QHBoxLayout()
+        layout.addWidget(w1)
+        layout.addWidget(w2)
+        layout.addWidget(w3)
+        group.setLayout(layout)
+        return group           
 
 
 class OptionsWidget(QWidget):
@@ -403,16 +417,21 @@ class OptionsWidget(QWidget):
         pushButton.clicked.connect(self.on_pushButton_config)
         self.layout.addWidget(QColumn(QLabel("Kategorien"), pushButton))
 
-    def add_radio_log(self):	
+    def add_radio_log(self, lines=1):	
         self.radioPlot1 = QRadioButton("Linear")	 
         self.radioPlot2 = QRadioButton("Log")	 
         self.radioPlot1.setChecked(True) 	   
-        self.layout.addWidget(QColumn(self.radioPlot1, self.radioPlot2 ))        
+        self.layout.addWidget(QColumn3(QLabel("Skala Plot 1"),self.radioPlot1, self.radioPlot2 ))        
+        if lines > 1:
+            self.radioPlot1b = QRadioButton("Linear")	 
+            self.radioPlot2b = QRadioButton("Log")	 
+            self.radioPlot1b.setChecked(True) 	   
+            self.layout.addWidget(QColumn3(QLabel("Skala Plot 2"),self.radioPlot1b, self.radioPlot2b))        
 
     def add_radio_level(self):	
         self.radioLevel1 = QRadioButton("Level 1")	 
         self.radioLevel2 = QRadioButton("Level 2")	 
-        self.radioLevel1.setChecked(True) 	   
+        self.radioLevel2.setChecked(True) 	   
         self.layout.addWidget(QColumn(self.radioLevel1, self.radioLevel2 ))               
 
     def on_pushButton_start(self):
@@ -434,7 +453,7 @@ class InOutTab(OptionsWidget):
         self.add_categories()
         self.add_time_period()
         self.add_configure()
-        self.add_radio_log()
+        self.add_radio_log(lines=2)
         self.add_radio_level()
         self.add_button_data()
         self.add_start_button()
@@ -445,7 +464,17 @@ class InOutTab(OptionsWidget):
             self.ComboBox.addItem(key)
             item = self.ComboBox.model().item(i, 0)
             item.setCheckState(Qt.Unchecked)
+
+        self.ComboBoxAccount = QComboBox()
+        self.ComboBoxAccount.addItem("Alle")
+        item = self.ComboBoxAccount.model().item(0, 0)        
+        for i,key in enumerate(self.parent.DATA.names):
+            self.ComboBoxAccount.addItem(key)
+            item = self.ComboBoxAccount.model().item(i+1, 0)
+            item.setCheckState(Qt.Unchecked)      
+
         self.layout.addWidget(QColumn(QLabel("Geldfluss"),self.ComboBox))
+        self.layout.addWidget(QColumn(QLabel("Konto"),self.ComboBoxAccount))
 
     def add_button_data(self):   
         self.pushButton = QPushButton("Show Data")
@@ -480,24 +509,27 @@ class InOutTab(OptionsWidget):
                 all_keys = self.parent.KEYS.IN[level]
         else:
                 all_keys = self.parent.KEYS.OUT[level]
+
+
+        if (self.ComboBoxAccount.currentText() == "Alle"):
+                used_data = self.parent.DATA.df_transactions
+        else:
+                print(self.ComboBoxAccount.currentText())
+                used_data = self.parent.DATA.df_transactions[self.parent.DATA.df_transactions['Account']==self.ComboBoxAccount.currentText()]
+        print("used_data", used_data)
+
         s_inout = self.ComboBox.currentText()
 
         selected_keys = [key for key  in all_keys.keys() if key in self.parent.KEYS.is_included[level]]
-        arguments = [self.parent.DATA.df_transactions, selected_keys, level, self.date_start, self.date_end]
-
-        if self.radioPlot1.isChecked():
-            style1 = "StackedBar"
-            style2 = "HorizontalBar"
-        else:
-            style1 = "StackedBarLog"
-            style2 = "HorizontalBarLog"
-
+        arguments = [used_data, selected_keys, level, self.date_start, self.date_end]
 
         self.new_plot_window = NewPlotWindow( 
-                arg4=[style1, *analyse.prepare_stacked_bar(*arguments), s_inout + " pro Monat"],
-                arg2 = [],
-                arg3=["PieChart", *analyse.prepare_pie_chart(*arguments), "Prozentuale Verteilung der " + s_inout], 
-                arg1=[style2, *analyse.prepare_horizontal_bar(*arguments), "Durchschnittliche " + s_inout], 
+                arg1=["StackedBar" if self.radioPlot1.isChecked() else "StackedBarLog", 
+                    *analyse.prepare_stacked_bar(*arguments), s_inout + " pro Monat"],
+                arg3 = [],
+                arg4=["PieChart", *analyse.prepare_pie_chart(*arguments), "Prozentuale Verteilung der " + s_inout], 
+                arg2=["HorizontalBar" if  self.radioPlot1b.isChecked() else "HorizontalBarLog", 
+                    *analyse.prepare_horizontal_bar(*arguments), "Durchschnittliche " + s_inout], 
                 title="Plots")
 
         self.update_data(self.new_plot_window, *arguments)    
@@ -511,7 +543,7 @@ class AccountTab(OptionsWidget):
     def add_contents(self):
         self.add_time_period()
         self.add_configure()        
-        self.add_radio_log()       
+        self.add_radio_log(lines=2)       
         self.add_start_button()
 
     def on_pushButton_config(self):
@@ -535,9 +567,9 @@ class AccountTab(OptionsWidget):
 
 
         self.new_plot_window = NewPlotWindow(
-            arg1=[style1, *analyse.prepare_stacked_bar_accounts(*arguments), "Kontostände pro Monat"],
+            arg1=["StackedBar" if self.radioPlot1.isChecked() else "StackedBarLog", *analyse.prepare_stacked_bar_accounts(*arguments), "Kontostände pro Monat"],
             arg2=["PlusMinusBar",*analyse.prepare_plusminus_bar(*arguments), "Monatliche Veränderungen"], 
-            arg3=[style2, *analyse.prepare_horizontal_bar_accounts(*arguments), "Letzte Kontostände"],                         
+            arg3=["HorizontalBar" if self.radioPlot1.isChecked() else "HorizontalBarLog" , *analyse.prepare_horizontal_bar_accounts(*arguments), "Letzte Kontostände"],                         
             arg4=["PieChart",*analyse.prepare_horizontal_bar_accounts(*arguments), "Prozentuale Verteilung des Vermögens"],
             title="Plots")
         self.new_plot_window.show()
@@ -641,6 +673,7 @@ class App(QDialog):
         self.all_dates = sorted(analyse.generate_dates(
                     min(df[df['Date'] > datetime.date(2000,1,1)]['Date']), max(df['Date'])
                 ))
+       
         self.all_dates = [analyse.get_month(d) for d in self.all_dates]
 
         self.initUI(plots)

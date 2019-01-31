@@ -25,32 +25,36 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 use_colors = [
    (0.561,0.188,0.357),
    (0.839,0.561,0.686),
-#    (0.702,0.349,0.51),
+   (0.702,0.349,0.51),
    (0.42,0.071,0.231),
    (0.278,0,0.129),
    (0.447,0.612,0.204),
    (0.792,0.918,0.612),
-#    (0.608,0.765,0.384),
+   (0.608,0.765,0.384),
    (0.302,0.459,0.078),
    (0.18,0.306,0),
    (0.42,0.184,0.549),
    (0.702,0.525,0.796),
-#    (0.525,0.306,0.643),
+   (0.525,0.306,0.643),
    (0.322,0.094,0.447),
    (0.212,0.016,0.318),
    (0.824,0.824,0.243),
    (1,1,0.639),
-#    (0.965,0.965,0.431),
+   (0.965,0.965,0.431),
    (0.671,0.671,0.11),
    (0.475,0.475,0),
-
-      (0.322,0.094,0.447),
+   (0.322,0.094,0.447),
    (0.212,0.016,0.318),
    (0.824,0.824,0.243),
    (1,1,0.639),
-#    (0.965,0.965,0.431),
+   (0.965,0.965,0.431),
    (0.671,0.671,0.11),
-   (0.475,0.475,0)
+   (0.475,0.475,0),
+   (0.49,0.624,0.208),
+   (0.835,0.937,0.624),
+   (0.655,0.78,0.388),
+   (0.341,0.467,0.078),
+   (0.212,0.314,0),
 ]
 
 bg_color = (0.3, 0.3, 0.3)
@@ -140,7 +144,7 @@ class NewPlotCanvas(QMainWindow):
         self.min_x = (dates[0]-datetime.date(1,1,1)).days
         self.axes.set_title(ptitle, color=title_color)
 
-        self.axes.locator_params(tight=True, nbins=4)        
+     #   self.axes.locator_params(tight=True, nbins=4)        
 
         self.axes.set_facecolor(bg_color)
         self.axes.xaxis.set_tick_params(color=fg_color, labelcolor=fg_color)
@@ -230,23 +234,46 @@ class NewPlotCanvas(QMainWindow):
         # self.axes.set_title(ptitle, color=title_color)
         self.canvas.draw()  
 
-    def on_draw_HorizontalBar(self, data, labels, ptitle, log=False): 
+    def on_draw_HorizontalBar(self, in_data, in_labels, ptitle, log=False): 
         self.fig.clear()
-        self.axes = self.fig.add_subplot(111)        
+        self.axes = self.fig.add_subplot(111)   
 
-        x = np.flip(np.arange(max(len(data),10)))
+        data = []
+        labels = []
+
+        for d, l in zip(in_data, in_labels):
+            if abs(d) > 0.1:
+                data.append(d)
+                labels.append(l)
+
+        if len(data) < 10:
+            for x in range(len(data),10):
+                data.append(0)
+                labels.append("")
+        
+
+        x = np.flip(np.arange(max(len(data)+1,10)))
+        x = np.flip(np.arange(len(data)+1))
         # val = [abs(sum([x for x in y.values()]))/(1*len(dates)) for y in data]
         self.sc = []
         self.all_label = []
-        for i in range(len(x)):
-            if i < len(data):
+        summe = 0
+        for i in range(len(x)-1):
+            if (i < len(data)) & (abs(data[i]) > 1.):
                 self.label_store={}
                 self.sc.append(self.axes.barh(x[i], data[i], 0.75, color=use_colors[i]))
+                summe += data[i]
                 for bar in self.sc[-1]:
                     self.label_store[bar] = labels[i]   
                 self.all_label.append(self.label_store)
             else:
                 self.sc.append(self.axes.barh(x[i], 0, 0.75))
+                # labels.append("")
+                # data.append(0)
+        self.sc.append(self.axes.barh(x[-1], summe, 0.75))  
+        data.append(summe)
+        labels.append("Summe")
+     
 
         if (log):
             self.axes.set_xscale('log')    
@@ -260,22 +287,23 @@ class NewPlotCanvas(QMainWindow):
         self.axes.grid(color='gray', linestyle='-', linewidth=0.2)        
 
         for i,k in enumerate(labels):
-            if (log is False):
-                shift = max(data)/100
-                if data[i] > max(data)/2:
-                    self.axes.text(data[i]-shift, x[i], str(k)+" ("+str(int(data[i]))+" Eur)",
-                    size=10, horizontalalignment='right', verticalalignment='center', color='white')
+            if abs(data[i]) > 1:
+                if (log is False):
+                    shift = max(data)/100
+                    if data[i] > max(data)/2:
+                        self.axes.text(data[i]-shift, x[i], str(k)+" ("+str(int(data[i]))+" Eur)",
+                        size=10, horizontalalignment='right', verticalalignment='center', color='white')
+                    else:
+                        self.axes.text(data[i]+shift, x[i], str(k)+" ("+str(int(data[i]))+" Eur)",size=10, 
+                            verticalalignment='center', horizontalalignment='left', color='white')
                 else:
-                    self.axes.text(data[i]+shift, x[i], str(k)+" ("+str(int(data[i]))+" Eur)",size=10, 
-                        verticalalignment='center', horizontalalignment='left', color='white')
-            else:
-                shift = math.log(max(data))/100
-                if math.log(abs(data[i])) > math.log(max(data))/2:
-                    self.axes.text(math.exp(math.log(abs(data[i])-shift)), x[i], str(k)+" ("+str(int(data[i]))+" Eur)",
-                    size=10, horizontalalignment='right', verticalalignment='center', color='white')
-                else:
-                    self.axes.text(math.exp(math.log(abs(data[i])+shift)), x[i], str(k)+" ("+str(int(data[i]))+" Eur)",size=10, 
-                        verticalalignment='center', horizontalalignment='left', color='white')
+                    shift = math.log(max(data))/100
+                    if math.log(abs(data[i])) > math.log(max(data))/2:
+                        self.axes.text(math.exp(math.log(abs(data[i])-shift)), x[i], str(k)+" ("+str(int(data[i]))+" Eur)",
+                        size=10, horizontalalignment='right', verticalalignment='center', color='white')
+                    else:
+                        self.axes.text(math.exp(math.log(abs(data[i])+shift)), x[i], str(k)+" ("+str(int(data[i]))+" Eur)",size=10, 
+                            verticalalignment='center', horizontalalignment='left', color='white')
 
 
         self.annot = self.axes.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",

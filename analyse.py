@@ -99,7 +99,7 @@ class Balance():
                 info['Description'].append(entry[1])
                 info['Amount'].append(entry[2])
                 info['InOut'].append('IN' if entry[2] > 0  else 'OUT')
-                cat1, cat2 = get_category(entry[1], keywords)
+                cat1, cat2 = get_category(entry[1], keywords, entry[2])
                 info['Category0'].append(cat1)
                 info['Category1'].append(cat2)
                 info['Account'].append(name)
@@ -128,30 +128,53 @@ class Balance():
  
 
 # HELPER FUNCTIONS
-def get_category(text, keywords):
+def get_category(text, keywords, amount):
     up = text.upper()
-    k1 = 'not categorised'
-    k2 = 'not categorised'
-    for k in keywords.IN[0].keys():
-        if  max([up.find(x.upper()) for x in keywords.IN[0][k]]) > -1:
-           k1 = k
-    for k in keywords.OUT[0].keys():
-        if  max([up.find(x.upper()) for x in keywords.OUT[0][k]]) > -1:
-           k1 = k
-    for k in keywords.INTERNAL[0].keys():
-        if  max([up.find(x.upper()) for x in keywords.INTERNAL[0][k]]) > -1:
-           k1 = k                   
+    for i in range(2):
+        found = False
+        k_found = 'not categorised'
+        if i==0:
+            up = text.upper()
+        else:
+            up = k1.upper()
 
-    up = k1.upper()
-    for k in keywords.IN[1].keys():
-        if  max([up.find(x.upper()) for x in keywords.IN[1][k]]) > -1:
-           k2 = k
-    for k in keywords.OUT[1].keys():
-        if  max([up.find(x.upper()) for x in keywords.OUT[1][k]]) > -1:
-           k2 = k
-    for k in keywords.INTERNAL[1].keys():
-        if  max([up.find(x.upper()) for x in keywords.INTERNAL[1][k]]) > -1:
-           k2 = k                   
+        if amount > 0:
+            cats = [keywords.IN[i], keywords.INTERNAL[i]]
+        else:
+            cats = [keywords.OUT[i], keywords.INTERNAL[i]]
+        
+        cats = [keywords.IN[i], keywords.OUT[i], keywords.INTERNAL[i]]
+
+        for keys  in cats:
+            for k in keys.keys():
+                if  max([up.find(x.upper()) for x in keys[k]]) > -1:
+                    if found == True:
+                        print("WARNING: categorisation of "+up+" not unique: ", k_found, k)
+                    else:
+                        k_found = k
+                        found = True
+
+        # for k in keywords.OUT[i].keys():
+        #     if  max([up.find(x.upper()) for x in keywords.OUT[i][k]]) > -1:
+        #     k_found = k
+        # for k in keywords.INTERNAL[i].keys():
+        #     if  max([up.find(x.upper()) for x in keywords.INTERNAL[i][k]]) > -1:
+        #     k_found = k
+        if i==0:
+            k1 = k_found
+        else:
+            k2 = k_found                   
+
+    # up = k1.upper()
+    # for k in keywords.IN[1].keys():
+    #     if  max([up.find(x.upper()) for x in keywords.IN[1][k]]) > -1:
+    #        k2 = k
+    # for k in keywords.OUT[1].keys():
+    #     if  max([up.find(x.upper()) for x in keywords.OUT[1][k]]) > -1:
+    #        k2 = k
+    # for k in keywords.INTERNAL[1].keys():
+    #     if  max([up.find(x.upper()) for x in keywords.INTERNAL[1][k]]) > -1:
+    #        k2 = k                   
 
     return k1, k2
 
@@ -213,6 +236,14 @@ def last_entry_of_month_inout(df, keywords, level, start, end):
 def last_entry_of_month_accounts(df, keywords, start, end):
     dates = generate_dates(start, end)
     out = OrderedDict()
+    last_val = defaultdict(lambda: 0)        
+    for acc in keywords:
+            val = df[(df['Account']==acc) & 
+                    (df['Date'] < dates[0]) ]['Sum'] 
+            if len(val.index) == 0:                    
+                last_val[acc]=0.
+            else:
+                last_val[acc]=float(val.tail(1))     
     for d in dates:
         new_main = OrderedDict()
         for k in keywords:
@@ -223,6 +254,11 @@ def last_entry_of_month_accounts(df, keywords, start, end):
                 new_main[k] = OrderedDict()                
                 new_main[k]['entries'] = [[e['Date'], e['Description'], e['Transaction']] for i, e in entries.iterrows()]
                 new_main[k]['sum'] = [entries['Sum'].iloc[-1], sum(entries['Transaction'])]
+                last_val[k] = entries['Sum'].iloc[-1]
+            else:
+                new_main[k] = OrderedDict()                
+                new_main[k]['entries'] = []
+                new_main[k]['sum'] = [last_val[k], 0.]
         if len(new_main.keys())>0:                
             out[d] = new_main
     return out
@@ -292,6 +328,14 @@ def prepare_horizontal_bar(df, keywords, level, start, end):
 def prepare_stacked_bar_accounts(df, accounts, start, end):
         dates = generate_dates(start, end)
         final_val =[]
+        last_val = defaultdict(lambda: 0)        
+        for acc in accounts:
+            val = df[(df['Account']==acc) & 
+                    (df['Date'] < dates[0])  ]['Sum'] 
+            if len(val.index) == 0:                    
+                last_val[acc]=0.
+            else:
+                last_val[acc]=float(val.tail(1))       
         for d in dates:
             per_month=[]
             for acc in accounts:
@@ -300,9 +344,11 @@ def prepare_stacked_bar_accounts(df, accounts, start, end):
                         & (df['Date'] < d) 
                         ]['Sum']
                 if len(val.index) == 0:
-                    per_month.append(0)
+                    print(acc, last_val[acc])
+                    per_month.append(last_val[acc])
                 else:
                     per_month.append(float(val.tail(1)))
+                    last_val[acc]=float(val.tail(1))
             final_val.append(per_month)
         return final_val, accounts, skip_days(dates)
 
@@ -317,12 +363,52 @@ def prepare_horizontal_bar_accounts(df, accounts, start, end):
 def prepare_plusminus_bar(df, accounts, start, end):
     dates = generate_dates(start, end)
     out = []
+    final_val = []
+    # for d in dates:
+    #     out.append(
+    #         sum(df[(df['Date'] >= skip_day(d))
+    #             & (df['Date'] < d) 
+    #             ]['Transaction'])
+    #     )
+    last_val = defaultdict(lambda: 0)        
+    for acc in accounts:
+            val = df[(df['Account']==acc) & 
+                    (df['Date'] < dates[0])  ]['Sum'] 
+            if len(val.index) == 0:                    
+                last_val[acc]=0.
+            else:
+                last_val[acc]=float(val.tail(1))      
+
+    per_month=[]
+    for acc in accounts:
+                val = df[(df['Account']==acc) 
+                        & (df['Date'] < skip_day(dates[0]))
+                        ]['Sum']
+                if len(val.index) == 0:
+                    per_month.append(last_val[acc])
+                else:
+                    per_month.append(float(val.tail(1)))
+                    last_val[acc]=float(val.tail(1))
+    final_val.append(sum(per_month))
+
     for d in dates:
-        out.append(
-            sum(df[(df['Date'] >= skip_day(d))
-                & (df['Date'] < d) 
-                ]['Transaction'])
-        )
+            per_month=[]
+            for acc in accounts:
+                val = df[(df['Account']==acc) 
+                        & (df['Date'] >= skip_day(d))
+                        & (df['Date'] < d) 
+                        ]['Sum']
+                if len(val.index) == 0:
+                    print(acc, last_val[acc])
+                    per_month.append(last_val[acc])
+                else:
+                    per_month.append(float(val.tail(1)))
+                    last_val[acc]=float(val.tail(1))
+            final_val.append(sum(per_month))
+
+    out = []
+    for i in range(len(final_val)-1):
+        out.append(final_val[i+1]-final_val[i])
     return out, skip_days(dates)        
 
 # STOCKS

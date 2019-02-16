@@ -20,9 +20,9 @@ import mplcursors
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
         QDial, QDialog, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
         QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy,
-        QTreeWidget, QTreeWidgetItem, QTreeWidgetItemIterator,
+        QTreeWidget, QTreeWidgetItem, QTreeWidgetItemIterator, QButtonGroup,
         QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget, QTextEdit,
-        QVBoxLayout, QWidget,QMainWindow,QToolButton,QMenu,QTableWidgetItem,QHeaderView)
+        QVBoxLayout, QWidget,QMainWindow,QToolButton,QMenu,QTableWidgetItem,QHeaderView, QFrame)
 from PyQt5.QtGui import QIcon, QStandardItemModel
 from PyQt5.QtCore import Qt
 
@@ -380,7 +380,7 @@ class OptionsWidget(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        self.layout = QVBoxLayout()
+        self.layout = QGridLayout()
         self.group = QGroupBox()
         self.add_contents()
         self.group.setLayout(self.layout)
@@ -389,56 +389,117 @@ class OptionsWidget(QWidget):
     def add_contents(self):
         pass 
 
-    def add_start_button(self):
+    def add_start_button(self, h):
         pushButton = QPushButton("Start")
         pushButton.clicked.connect(self.on_pushButton_start)
-        self.layout.addWidget(pushButton)
+        self.layout.addWidget(pushButton, h, 0, 2, 3)
 
-    def add_time_period(self):
+    def add_detail_button(self, h):
+        pushButton = QPushButton("Details")
+        pushButton.clicked.connect(self.on_pushButton_details)
+        self.layout.addWidget(pushButton, h, 0, 2, 3)        
+
+    def add_time_period(self, h):
         inner_group = QGroupBox()
-        inner_layout = QHBoxLayout()
+        inner_layout = QGridLayout()
         self.ComboBoxStart = QComboBox()
         for i,key in enumerate(self.parent.all_dates):
             self.ComboBoxStart.addItem(key)
-        inner_layout.addWidget(self.ComboBoxStart)
+        inner_layout.addWidget(self.ComboBoxStart, 0, 0)
 
-        inner_layout.addWidget(QLabel("-"))            
+        inner_layout.addWidget(QLabel("-"), 0, 1)            
         
         self.ComboBoxEnd = QComboBox()
         for i,key in enumerate(self.parent.all_dates):
             self.ComboBoxEnd.addItem(key)
         self.ComboBoxEnd.setCurrentIndex(len(self.parent.all_dates)-1)
-        inner_layout.addWidget(self.ComboBoxEnd)
+        inner_layout.addWidget(self.ComboBoxEnd, 0, 2)
         inner_group.setLayout(inner_layout)
-        self.layout.addWidget(QColumn(QLabel("Zeitraum"),inner_group))         
+        self.layout.addWidget(QLabel("Zeitraum"), h, 0)
+        self.layout.addWidget(inner_group, h, 1, 1, 2)
+        # self.layout.addWidget(QColumn(QLabel("Zeitraum"),inner_group)) 
+        # 
+        newl = QLabel()
+        newl.setFrameStyle(QFrame.HLine )
+        self.layout.addWidget(newl, h+1, 0, 1, 3)
 
-    def add_configure(self):
+
+    def add_configure(self,h):
         pushButton = QPushButton("Auswahl")
         pushButton.clicked.connect(self.on_pushButton_config)
-        self.layout.addWidget(QColumn(QLabel("Kategorien"), pushButton))
+        # self.layout.addWidget(QColumn(QLabel("Kategorien"), pushButton))
+        self.layout.addWidget(QLabel("Kategorien"), h, 0)
+        self.layout.addWidget(pushButton, h, 1, 1, 2)
 
-    def add_radio_log(self, lines=1):	
+        newl = QLabel()
+        newl.setFrameStyle(QFrame.HLine )
+        self.layout.addWidget(newl, h+1, 0, 1, 3)
+
+
+    def add_radio_log(self, h, lines=1):	
+        plot1_group=QButtonGroup(QWidget(self)) 
         self.radioPlot1 = QRadioButton("Linear")	 
-        self.radioPlot2 = QRadioButton("Log")	 
+        self.radioPlot2 = QRadioButton("Log")	
+        plot1_group.addButton(self.radioPlot1) 
+        plot1_group.addButton(self.radioPlot2) 
         self.radioPlot1.setChecked(True) 	   
-        self.layout.addWidget(QColumn3(QLabel("Skala Plot 1"),self.radioPlot1, self.radioPlot2 ))        
+        # self.layout.addWidget(QColumn3(QLabel("Skala Plot 1"),self.radioPlot1, self.radioPlot2 ))        
+        self.layout.addWidget(QLabel("Skala Plot 1"), h, 0)
+        self.layout.addWidget(self.radioPlot1, h, 1)
+        self.layout.addWidget(self.radioPlot2, h, 2)        
         if lines > 1:
             self.radioPlot1b = QRadioButton("Linear")	 
             self.radioPlot2b = QRadioButton("Log")	 
-            self.radioPlot1b.setChecked(True) 	   
-            self.layout.addWidget(QColumn3(QLabel("Skala Plot 2"),self.radioPlot1b, self.radioPlot2b))        
+            self.radioPlot1b.setChecked(True) 	
+            plot2_group=QButtonGroup(QWidget(self))            
+            plot2_group.addButton(self.radioPlot1b) 
+            plot2_group.addButton(self.radioPlot2b)                
+            # self.layout.addWidget(QColumn3(QLabel("Skala Plot 2"),self.radioPlot1b, self.radioPlot2b))        
+            self.layout.addWidget(QLabel("Skala Plot 2"), h+1, 0)
+            self.layout.addWidget(self.radioPlot1b, h+1, 1)
+            self.layout.addWidget(self.radioPlot2b, h+1, 2)    
 
-    def add_radio_level(self):	
-        self.radioLevel1 = QRadioButton("Level 1")	 
-        self.radioLevel2 = QRadioButton("Level 2")	 
+        newl = QLabel()
+        newl.setFrameStyle(QFrame.HLine )
+        self.layout.addWidget(newl, h+2, 0, 1, 3)
+
+
+    def add_radio_level(self, h):	
+        self.radioLevel1 = QRadioButton("fein")	 
+        self.radioLevel2 = QRadioButton("grob")	 
         self.radioLevel2.setChecked(True) 	   
-        self.layout.addWidget(QColumn(self.radioLevel1, self.radioLevel2 ))               
+        level_group=QButtonGroup(QWidget(self))            
+        level_group.addButton(self.radioLevel1) 
+        level_group.addButton(self.radioLevel2)                
+
+        # self.layout.addWidget(QColumn(self.radioLevel1, self.radioLevel2 ))               
+        self.layout.addWidget(QLabel("Zusammenfassung"), h, 0)
+        self.layout.addWidget(self.radioLevel1, h, 1)
+        self.layout.addWidget(self.radioLevel2, h, 2)
+
+    def add_fine_category(self,h):
+        self.ComboBoxFine = QComboBox()
+        for i,key in enumerate(self.parent.KEYS.OUT[1]):
+            self.ComboBoxFine.addItem(key)
+            item = self.ComboBoxFine.model().item(i, 0)
+            item.setCheckState(Qt.Unchecked)    
+
+        newl = QLabel()
+        newl.setFrameStyle(QFrame.HLine )
+        self.layout.addWidget(newl, h+1, 0, 1, 3)             
+
+        self.layout.addWidget(QLabel("Details"), h+2, 0)            
+        self.layout.addWidget(self.ComboBoxFine, h+2, 1, 1, 2)   
+
 
     def on_pushButton_start(self):
         pass
 
     def on_pushButton_config(self):
         pass    
+
+    def on_pushButton_details(self):
+        pass          
 
     def set_dates(self):
         self.date_start = analyse.go_to_last_day(datetime.datetime.strptime(self.ComboBoxStart.currentText() ,"%m/%Y").date())
@@ -450,15 +511,19 @@ class InOutTab(OptionsWidget):
         super().__init__(parent)
 
     def add_contents(self):
-        self.add_categories()
-        self.add_time_period()
-        self.add_configure()
-        self.add_radio_log(lines=2)
-        self.add_radio_level()
-        self.add_button_data()
-        self.add_start_button()
+        self.add_categories(0)
+        self.add_configure(2)
+        self.add_radio_level(4)        
+        self.add_time_period(5)        
+        self.add_radio_log(7,lines=2)
+        # self.add_button_data(8)
+        self.add_start_button(10)
 
-    def add_categories(self):
+        self.add_fine_category(11)
+        self.add_detail_button(14)        
+
+
+    def add_categories(self, h):
         self.ComboBox = QComboBox()
         for i,key in enumerate(['Einnahmen', 'Ausgaben']):
             self.ComboBox.addItem(key)
@@ -473,18 +538,19 @@ class InOutTab(OptionsWidget):
             item = self.ComboBoxAccount.model().item(i+1, 0)
             item.setCheckState(Qt.Unchecked)      
 
-        self.layout.addWidget(QColumn(QLabel("Geldfluss"),self.ComboBox))
-        self.layout.addWidget(QColumn(QLabel("Konto"),self.ComboBoxAccount))
+        self.layout.addWidget(QLabel("Geldfluss"), h, 0)            
+        self.layout.addWidget(self.ComboBox, h, 1, 1, 2)            
 
-    def add_button_data(self):   
-        self.pushButton = QPushButton("Show Data")
-        self.pushButton.clicked.connect(self.on_pushButton_data)
-        self.layout.addWidget(self.pushButton)  
+        self.layout.addWidget(QLabel("Konto"), h+1, 0)            
+        self.layout.addWidget(self.ComboBoxAccount, h+1, 1, 1, 2)   
 
-    def on_pushButton_data(self):
-        # pass
-        self.data_window = Data_Window(self.parent.DATA.df_transactions, "Input Data")
-        self.data_window.show()         
+        # new_frame = QFrame()         
+
+
+        # self.layout.addWidget(QColumn(QLabel("Geldfluss"),self.ComboBox))
+        # self.layout.addWidget(QColumn(QLabel("Konto"),self.ComboBoxAccount))
+
+      
 
 
     def on_pushButton_config(self):
@@ -536,15 +602,44 @@ class InOutTab(OptionsWidget):
 
         self.new_plot_window.show()
 
+    def on_pushButton_details(self):
+        self.set_dates()
+
+        level = 0
+        all_keys = self.parent.KEYS.OUT[level]
+
+        if (self.ComboBoxAccount.currentText() == "Alle"):
+                used_data = self.parent.DATA.df_transactions
+        else:
+                used_data = self.parent.DATA.df_transactions[self.parent.DATA.df_transactions['Account']==self.ComboBoxAccount.currentText()]
+
+        s_inout = self.ComboBox.currentText()
+
+        selected_keys = [key for key  in all_keys.keys() if key in self.parent.KEYS.OUT[1][self.ComboBoxFine.currentText()]]
+        arguments = [used_data, selected_keys, level, self.date_start, self.date_end]
+
+        self.new_plot_window = NewPlotWindow( 
+                arg1=["StackedBar" if self.radioPlot1.isChecked() else "StackedBarLog", 
+                    *analyse.prepare_stacked_bar(*arguments), s_inout + " pro Monat"],
+                arg3 = [],
+                arg4=["PieChart", *analyse.prepare_pie_chart(*arguments), "Prozentuale Verteilung der " + s_inout], 
+                arg2=["HorizontalBar" if  self.radioPlot1b.isChecked() else "HorizontalBarLog", 
+                    *analyse.prepare_horizontal_bar(*arguments), "Durchschnittliche " + s_inout], 
+                title="Plots")
+
+        self.update_data(self.new_plot_window, *arguments)    
+
+        self.new_plot_window.show()        
+
 class AccountTab(OptionsWidget):
     def __init__(self, parent):
         super().__init__(parent)
 
     def add_contents(self):
-        self.add_time_period()
-        self.add_configure()        
-        self.add_radio_log(lines=2)       
-        self.add_start_button()
+        self.add_configure(1)                
+        self.add_time_period(3)
+        self.add_radio_log(5,lines=2)       
+        self.add_start_button(7)
 
     def on_pushButton_config(self):
         to_dict = lambda x: {y: 1 for y in x}
@@ -586,24 +681,37 @@ class StockTab(OptionsWidget):
         super().__init__(parent)
 
     def add_contents(self):
-        self.add_time_period()
-        self.add_configure() 
-        self.add_choice()       
-        self.add_radio()       
-        self.add_start_button()
+        self.add_configure(1)         
+        self.add_time_period(3)
+        self.add_choice(5)       
+        self.add_radio(7)       
+        self.add_start_button(9)
 
-    def add_choice(self):
+    def add_choice(self, h):
         self.checkAktien = QCheckBox("Aktien")
         self.checkFonds = QCheckBox("Fonds")
         self.checkAktien.setChecked(True) 
         self.checkFonds.setChecked(True) 
-        self.layout.addWidget(QColumn(self.checkAktien, self.checkFonds ))   
+        self.layout.addWidget(QLabel("Wertpapiere"), h, 0)        
+        self.layout.addWidget(self.checkAktien, h, 1)
+        self.layout.addWidget(self.checkFonds, h, 2 )
 
-    def add_radio(self):	
+        newl = QLabel()
+        newl.setFrameStyle(QFrame.HLine )
+        self.layout.addWidget(newl, h+1, 0, 1, 3)
+
+
+       
+
+    def add_radio(self, h):	
         self.radioPlot2 = QRadioButton("Absolut")	 
         self.radioPlot1 = QRadioButton("Relativ")	 
         self.radioPlot2.setChecked(True) 	   
-        self.layout.addWidget(QColumn(self.radioPlot1, self.radioPlot2 ))
+        # self.layout.addWidget(QColumn(self.radioPlot1, self.radioPlot2 ))
+        self.layout.addWidget(QLabel("Veränderungen"), h, 0)
+        self.layout.addWidget(self.radioPlot1, h, 1)
+        self.layout.addWidget(self.radioPlot2, h, 2 )
+
 
 
     def on_pushButton_config(self):
@@ -679,6 +787,7 @@ class App(QDialog):
         self.initUI(plots)
 
 
+
     def add_selection_group(self):
         self.selection_frame = QGroupBox("Optionen")
 
@@ -700,14 +809,27 @@ class App(QDialog):
 
     def add_data_group(self):
         self.data_frame = QGroupBox("Data")
-        layout = QVBoxLayout()
-        layout.addWidget(QColumn(QLabel("Konten:"), QLabel(str(len(self.DATA.df_acc)) + " Kontobewegungen")))
-        layout.addWidget(QColumn(QLabel("Datensatz:"), QLabel(str(len(self.DATA.df_transactions)) + " Kontobewegungen")))
-
+        self.this_layout = QGridLayout()
+        self.this_layout.addWidget(QLabel("Konten:"), 0, 0)
+        self.this_layout.addWidget(QLabel(str(len(self.DATA.df_acc)) + " Kontobewegungen"), 0, 1)
+        self.this_layout.addWidget(QLabel("Datensatz:"), 1, 0 )
+        self.this_layout.addWidget(QLabel(str(len(self.DATA.df_transactions)) + " Kontobewegungen"), 1, 1)
+        self.add_button_data()
         # self.data_main_tab = QTabWidget()
         # layout.addWidget(self.data_main_tab)
         # layout.addStretch()
-        self.data_frame.setLayout(layout)  
+        self.data_frame.setLayout(self.this_layout)  
+
+    def add_button_data(self):   
+        self.pushButton = QPushButton("Show Data")
+        self.pushButton.clicked.connect(self.on_pushButton_data)
+        self.this_layout.addWidget(self.pushButton, 2, 0, 1, 2)  
+
+
+    def on_pushButton_data(self):
+        # pass
+        self.data_window = Data_Window(self.parent.DATA.df_transactions, "Input Data")
+        self.data_window.show()           
 
 
     def initUI(self, plots):

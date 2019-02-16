@@ -104,8 +104,8 @@ class NewPlotCanvas(QMainWindow):
 
         if (style == "StackedBar"):
             self.canvas.mpl_connect("motion_notify_event", self.hover_bar)
-        if (style == "StackedBarLog"):
-            self.canvas.mpl_connect("motion_notify_event", self.hover_bar)            
+        # if (style == "StackedBarLog"):
+        #     self.canvas.mpl_connect("motion_notify_event", self.hover_bar)            
         # if (style == "HorizontalBar"):
             # self.canvas.mpl_connect("motion_notify_event", self.hover_bar) 
 
@@ -121,20 +121,25 @@ class NewPlotCanvas(QMainWindow):
         self.sc = []
         self.all_label = []
         dimw = 25
+        max_val = 0
         if (log is True):
             dimw = dimw/len(labels)
         for i in range(len(labels)):
             self.label_store={}
             y = [d[i] for d in data]
+            max_val = max(max_val, max(y))
             if (log is True):
                 new_dates = [d +datetime.timedelta(days=2*(int(len(labels)/2)+i)) for d in dates]
             else:
                 new_dates = dates
-            self.sc.append(self.axes.bar(new_dates , y, dimw, color=use_colors[i], bottom=bot, label=labels[i], alpha=0.75))
-            for bar in self.sc[-1]:
-                  self.label_store[bar] = labels[i] 
             if log is False:
+                self.sc.append(self.axes.bar(new_dates , y, dimw, color=use_colors[i], bottom=bot, label=labels[i], alpha=0.75))
+                for bar in self.sc[-1]:
+                    self.label_store[bar] = labels[i] 
                 bot = [bot[j] + y[j] for j in range(len(y))]
+            else:
+                self.sc.append(self.axes.scatter(new_dates , y, color=use_colors[i], label=labels[i]))
+                self.axes.set_ylim(10,5*max_val)
             self.all_label.append(self.label_store)
 
         if (log is True):
@@ -143,8 +148,6 @@ class NewPlotCanvas(QMainWindow):
         self.max_x = (dates[-1]-datetime.date(1,1,1)).days
         self.min_x = (dates[0]-datetime.date(1,1,1)).days
         self.axes.set_title(ptitle, color=title_color)
-
-     #   self.axes.locator_params(tight=True, nbins=4)        
 
         self.axes.set_facecolor(bg_color)
         self.axes.xaxis.set_tick_params(color=fg_color, labelcolor=fg_color)
@@ -158,12 +161,12 @@ class NewPlotCanvas(QMainWindow):
         self.fig.autofmt_xdate()
 
         self.x_values_text = 20
-
-        self.annot = self.axes.annotate("", xy=(0,0), xytext=(self.x_values_text,20), textcoords="offset points",
-                            ha = 'center',
-                            bbox=dict(fc="w"),
-                            arrowprops=dict(arrowstyle="->"))
-        self.annot.set_visible(False)
+        if log is False:
+            self.annot = self.axes.annotate("", xy=(0,0), xytext=(self.x_values_text,20), textcoords="offset points",
+                                ha = 'center',
+                                bbox=dict(fc="w"),
+                                arrowprops=dict(arrowstyle="->"))
+            self.annot.set_visible(False)
         self.canvas.draw() 
 
     def on_draw_LogLinear(self, data, labels,ptitle, dates):

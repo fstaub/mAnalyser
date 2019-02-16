@@ -60,7 +60,7 @@ class DiBa_Parser(Parser):
         return out
 
     def purpose(self,in1,in2,in3):
-        return in1 + " " + in2 
+        return in1 + " " + in2 + " " + in3 
 
 
 class LBB_Parser(Parser):
@@ -87,6 +87,7 @@ class Amazon_Parser(Parser):
         with open(file, newline='') as csvfile:
             spamreader = csv.reader(csvfile, delimiter=',', quotechar='"')
             for row in spamreader:
+                # print(row)
                 data.append(self.format_entry(row))
                 data.append(self.format_entry_payment(row))
         return data
